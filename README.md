@@ -26,19 +26,19 @@ Cuando un usuario inicia sesión correctamente, el backend genera un token JWT q
 - Nodemon: Herramienta utilizada durante el desarrollo para reiniciar automáticamente el servidor cuando se modifican los archivos.
 
 ### Ejecución
-El servidor se ejecuta mediante:
+El servidor se ejecuta mediante:<br>
 ```npm run dev```
-Con puerto:
+Con puerto:<br>
 ```3000```
-La ruta principal:
+La ruta principal:<br>
 ```GET http://localhost:3000/```
-devuelve:
+devuelve:<br>
 ```{"mensaje": "Backend de Amargo y Dulce funcionando"}```
 
 ### Registro
-Endpoint:
+Endpoint:<br>
 ```POST /api/auth/register```
-Ejemplo:
+Ejemplo:<br>
 ```{
     "nombre": "Juan",
     "apellido": "Perez",
@@ -48,15 +48,15 @@ Ejemplo:
 ```
 
 ### Login
-Endpoint:
+Endpoint:<br>
 ```POST /api/auth/login```
-Ejemplo:
+Ejemplo:<br>
 ```{
     "correo": "juan@gmail.com",
     "contrasena": "12345678"
 }
 ```
-Si las credenciales son correctas, el backend devuelve:
+Si las credenciales son correctas, el backend devuelve:<br>
 ```{
     "mensaje": "Login exitoso",
     "token": "...",
