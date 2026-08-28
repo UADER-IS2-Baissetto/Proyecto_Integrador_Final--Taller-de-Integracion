@@ -13,7 +13,7 @@
 ## *Backend*
 ### Tecnologías utilizadas
 El backend está desarrollado utilizando:
-Node.js: Entorno de ejecución utilizado para ejecutar JavaScript del lado del servidor.
+\n Node.js: Entorno de ejecución utilizado para ejecutar JavaScript del lado del servidor.
 Express: Framework utilizado para crear el servidor HTTP y la API REST.
 JavaScript:Lenguaje utilizado para desarrollar toda la lógica del backend.
 PostgreSQL: Base de datos utilizada por el backend.
