@@ -26,8 +26,8 @@ Cuando un usuario inicia sesión correctamente, el backend genera un token JWT q
 - Nodemon: Herramienta utilizada durante el desarrollo para reiniciar automáticamente el servidor cuando se modifican los archivos.
 
 ### Ejecución
-El servidor se ejecuta mediante: \
-```npm run dev```
+El servidor se ejecuta mediante:
+\ ```npm run dev```
 Con puerto: \
 ```3000```
 La ruta principal: \
