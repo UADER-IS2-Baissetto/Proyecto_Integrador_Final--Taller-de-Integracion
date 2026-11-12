@@ -460,60 +460,106 @@ $$ language plpgsql;
 
 ------------------- Confirmar compra desde carrito -----------------
 create or replace function confirmar_compra(p_idcliente int)
-returns void as $$
+returns int as $$
 declare
     v_idcarrito int;
     v_idcompra int;
     v_total decimal := 0;
     item record;
 begin
-
-    -- Buscar carrito del cliente
+    -- Buscar y bloquear el carrito valido del cliente
     select id
     into v_idcarrito
-    from Carrito
-    where idcliente = p_idcliente;
+    from carrito
+    where idcliente = p_idcliente
+      and valido = true
+    order by id desc
+    limit 1
+    for update;
 
     if v_idcarrito is null then
-        raise exception 'El cliente no tiene carrito';
+        raise exception 'El cliente no tiene un carrito valido';
     end if;
 
     -- Verificar que el carrito tenga productos
     if not exists (
         select 1
-        from CarritoProducto
+        from carritoproducto
         where idcarrito = v_idcarrito
     ) then
-        raise exception 'El carrito está vacío';
+        raise exception 'El carrito esta vacio';
     end if;
 
-    -- Validar stock disponible
+    -- Bloquear los productos involucrados para evitar
+    -- modificaciones simultaneas de stock durante la compra
+    perform p.id
+    from producto p
+    join carritoproducto cp on cp.idproducto = p.id
+    where cp.idcarrito = v_idcarrito
+    order by p.id
+    for update of p;
+
+    -- Validar stock considerando la cantidad total
+    -- de cada producto dentro del carrito
     for item in
-        select cp.idproducto, cp.unidades, p.stock
-        from CarritoProducto cp
-        join Producto p on cp.idproducto = p.id
+        select
+            cp.idproducto,
+            sum(cp.unidades) as unidades,
+            p.stock
+        from carritoproducto cp
+        join producto p on p.id = cp.idproducto
         where cp.idcarrito = v_idcarrito
+        group by cp.idproducto, p.stock
     loop
-
         if item.stock < item.unidades then
-            raise exception 'Stock insuficiente para el producto ID %', item.idproducto;
+            raise exception
+                'Stock insuficiente para el producto ID %',
+                item.idproducto;
         end if;
-
     end loop;
 
-    -- Calcular total
-    select sum(subtotal)
+    -- Calcular el total con precios actuales y promociones vigentes
+    select coalesce(
+        sum(
+            cp.unidades * p.precio *
+            (1 - (
+                select coalesce(max(pr.valordescuento), 0)
+                from promo pr
+                where pr.idproducto = p.id
+                  and current_date between pr.fechainicio and pr.fechafin
+            ) / 100)
+        ),
+        0
+    )
     into v_total
-    from CarritoProducto
-    where idcarrito = v_idcarrito;
+    from carritoproducto cp
+    join producto p on p.id = cp.idproducto
+    where cp.idcarrito = v_idcarrito;
 
-    -- Crear compra
-    insert into Compra(idcliente, estado, total, fecha, descuento)
-    values (p_idcliente, 'pendiente', v_total, current_date, 0)
+    if v_total <= 0 then
+        raise exception 'El total de la compra debe ser mayor a cero';
+    end if;
+
+    -- Crear la compra
+    insert into compra (
+        idcliente,
+        estado,
+        total,
+        fecha,
+        descuento
+    )
+    values (
+        p_idcliente,
+        'pendiente',
+        v_total,
+        current_date,
+        0
+    )
     returning id into v_idcompra;
 
-    -- Pasar productos del carrito a CompraProducto
-    insert into CompraProducto(
+    -- Registrar los productos con sus precios actuales
+    -- y descuentos de promociones vigentes
+    insert into compraproducto (
         idcompra,
         idproducto,
         unidades,
@@ -523,17 +569,27 @@ begin
     )
     select
         v_idcompra,
-        idproducto,
-        unidades,
-        preciounitario,
-        subtotal,
-        descuento
-    from CarritoProducto
+        p.id,
+        cp.unidades,
+        p.precio,
+        0,
+        (
+            select coalesce(max(pr.valordescuento), 0)
+            from promo pr
+            where pr.idproducto = p.id
+              and current_date between pr.fechainicio and pr.fechafin
+        )
+    from carritoproducto cp
+    join producto p on p.id = cp.idproducto
+    where cp.idcarrito = v_idcarrito;
+
+    -- El trigger trg_restar_stock_compra descuenta el stock
+    -- automaticamente al insertar los detalles de la compra
+
+    -- Vaciar el carrito
+    delete from carritoproducto
     where idcarrito = v_idcarrito;
 
-    -- Vaciar carrito
-    delete from CarritoProducto
-    where idcarrito = v_idcarrito;
-
+    return v_idcompra;
 end;
 $$ language plpgsql;
