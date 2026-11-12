@@ -1,0 +1,132 @@
+body{
+    background-color: #DDB97F;
+}
+
+.liberty{
+    font-family: 'Nuptial Liberty', sans-serif;
+    color: white;
+}
+
+.lobster{
+    font-family: 'Lobster', sans-serif;
+}
+
+.logo {
+    position: relative;
+}
+
+.login{
+    background-color: #B78750;
+    border-color: #B78750;
+    border-radius: 35px;
+}
+
+.login label{
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.login button img{
+    width: 15%;
+    padding-right: 3%;
+    padding-bottom: 3%;
+}
+
+.login input{
+    background-color: #d9d9d9;
+    font-family: Arial, Helvetica, sans-serif;
+    width: 90%;
+    align-items: center;
+}
+
+.login button{
+    border-radius: 20px;
+    width: 90%;
+    font-size: 20px;
+}
+
+.volteado {
+    transform: scaleX(-1);
+}
+
+.iconos{
+    height: 50px;
+    width: 50px;
+    margin-top: 15%;
+    filter: drop-shadow(2px 1px 16px black);
+}
+
+.marinero{
+    position: absolute;
+    height: 130px;
+    width: 130px;
+    margin-left: -16px;
+    margin-top: -8px;
+    filter:drop-shadow(0px 3px 3px black);
+    transition: transform 0.5s ease-out;
+}
+
+.marinero:hover{
+    transform: rotateY(180deg);
+    transform-style: preserve-3d;
+}
+
+nav div{
+    background-color: #dd2727;
+}
+
+nav div .liberty{
+    font-size: 50px;
+    padding-top: 1%;
+    text-shadow: 2px 2px 2px black;
+}
+
+nav div .lobster{
+    font-size: 30px;
+    padding-top: 10%;
+    text-shadow: 2px 1px 8px black;
+}
+
+@font-face {
+    font-family: 'Nuptial Liberty';
+    src: url('Assets/Nuptial\ Liberty.ttf');
+}
+
+@font-face {
+    font-family: 'Lobster';
+    src: url('Assets/LobsterTwo-Regular.ttf');
+}
+
+
+.info p{
+    color: #B78750;
+    border-top: 1px solid #B78750;
+    padding-top: 15px;
+
+}
+
+.pie a{
+    font-family: "Lobster", sans-serif;
+    color: black;
+    text-decoration: none;
+}
+
+
+.borderless{
+    background-color: #DDB97F;
+    border: none;
+}
+
+.about-us h1{
+    font-weight: bold;
+    text-decoration: underline;
+}
+.about-us p{
+    color: #692D20;
+}
+
+footer .liberty a{
+    font-size: 25px;
+    color:black;
+    text-decoration: none;
+}
