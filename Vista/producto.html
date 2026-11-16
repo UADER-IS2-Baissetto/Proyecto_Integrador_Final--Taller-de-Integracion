@@ -11,32 +11,151 @@
 <body>
   <nav>
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-1">
-          <a class="nav-link"><img class="marinero" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png"></a>
+      <div class="row rojo">
+        <div class="col-md-1 col-2 align-self-center">
+          <img class="marinero" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
         </div>
-        <div class="col-5">
-          <a href="index.html" class="nav-link liberty">Amargo y Dulce</a>
+        <div class="align-self-center col-xl-9 col-lg-8 col-md-8 col-6">
+          <a href="index.html" class="nav-link liberty"><h1 class="display-4">Amargo y Dulce</h1></a>
         </div>
-        <div class="col-2">
-          <a href="index.html" class="nav-link lobster">Inicio</a>
+        <div class="col-md-1 col-1 pt-1">
+          <a href="carrito.html"><img class="iconos" src="Assets/carrito.png"></a>
         </div>
-        <div class="col-2">          
-          <a href="nosotros.html" class="nav-link lobster">Nosotros</a>
-        </div>
-        <div class="col-1">
-          <a href="carrito.html" class="nav-link"><img class="iconos" src="Assets/carrito.png"></a>
-        </div>
-        <div class="col-1">
-          <a class="nav-link"><img class="iconos" src="Assets/menu.png"></a>          
+        <div class="col-md-1 col-1 offset-md-0 offset-1 text-center">
+          <button class="navbar-toggler position-relative" type="button" data-bs-toggle="collapse" data-bs-target="#opciones2">
+            <span><img class="iconos pe-2 pt-2" src="Assets/menu.png"></span>
+          </button>
+            <div>
+              <div id="opciones2" class="z-1 position-absolute rounded-4 p-3 menu collapse">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <a class="nav-link lobster fs-5 mb-1" href="index.html">Inicio</a>
+                  </li>
+                  <li>
+                    <a class="nav-link lobster fs-5 mb-1" href="nosotros.html">Nosotros</a>
+                  </li>
+                  <li>
+                    <a class="nav-link lobster fs-5 mb-1" href="">Tu Perfil</a>
+                  </li>
+                  <li>
+                    <a class="nav-link lobster fs-5 mb-1" href="">Salir</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
         </div>
     </div>
   </nav>
-
-  <div>
+  
+  <div class="container mt-5">
     
-  </div>
+    <div class="row">
+      <div class="col">
+        <h1 class="lobster fw-bold display-4">Producto</h1>
+      </div>
+    </div>
 
+    <div class="row producto">
+      <div class="col-md-8">
+        <img class="img-fluid mx-auto d-block rounded-5 fondo-marron" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
+      </div>
+      <div class="col-sm">
+        <h2 class="lobster fw-bold">Acerca del producto</h2>
+        <p class="text-white fw-bold">Precio: $19.000</p>
+        <p>Descripción del producto</p>
+        
+        <form>
+        <div class="row">
+            <label for="control1" class="col-4 mb-4 text-white fw-bold">Tamaño:</label>
+            <div class="col">
+              <select class="form-select" id="control1" name="control1">
+                <option>Chico(6 unidades)</option>
+                <option>Mediano(12 unidades)</option>
+                <option>Grande(24 unidades)</option>
+              </select>
+            </div>
+          </div>
+        </form>
+        
+        <form>
+          <div class="row">
+            <label for="cantidad" class="col-4 mb-4 text-white fw-bold">Cantidad:</label>
+            <div class="col">
+              <input type="text" class="form-control" id="cantidad">
+            </div>
+          </div>
+        </form>
+
+        <div class="row">
+          <div class="col-6 text-center">
+            <button class="btn btn-dark rounded-5">Agregar al carrito</button>
+          </div>
+          <div class="col text-center">
+            <button class="btn rojo rounded-5">Comprar</button>
+          </div>
+        </div>
+      </div>
+    </div> 
+    
+    <div class="row mt-5 justify-content-between">
+      <h3 class="lobster fw-bold mb-4">Otros productos</h3>
+      <div class="col-3">
+          <div class="col">
+            <img class="img-fluid fondo-marron rounded-4" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
+            <div class="row">
+              <div class="col text-center mt-3">
+                <h5 class="lobster">Nombre producto recomendado</h5>
+                <br>
+                <p>precio</p>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="col-3">
+          <div class="col">
+            <img class="img-fluid fondo-marron rounded-4" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
+            <div class="row">
+              <div class="col text-center mt-3">
+                <h5 class="lobster">Nombre producto recomendado</h5>
+                <br>
+                <p>precio</p>
+              </div>
+            </div>
+          </div>
+      </div>
+      <div class="col-3">
+          <div class="col">
+            <img class="img-fluid fondo-marron rounded-4" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
+            <div class="row">
+              <div class="col text-center mt-3">
+                <h5 class="lobster">Nombre producto recomendado</h5>
+                <br>
+                <p>precio</p>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
+
+    <div class="row reseñas">
+      <h4 class="lobster fw-bold">Reseñas</h4>
+      <div class="col fondo-marron rounded-4">
+        <p>Está buenisimo este me lo compro todo lo sjueves</p>
+        <div class="row justify-content-between text-center">
+          <div class="col-2">
+            estrellas
+          </div>
+          <div class="col-2">
+            fecha
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="row agregar-reseña fondo-marron rounded-4 mt-3">
+      <p>+ ¿Agregar comentario?</p>
+    </div>
+  </div>
 
 
   <footer>

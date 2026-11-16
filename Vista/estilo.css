@@ -2,6 +2,18 @@ body{
     background-color: #DDB97F;
 }
 
+.rojo{
+    background-color: #dd2727;
+}
+
+.marron-oscuro{
+    color: #692D20;
+}
+
+.fondo-marron{
+    background-color: #C69B63;
+}
+
 .liberty{
     font-family: 'Nuptial Liberty', sans-serif;
     color: white;
@@ -57,11 +69,8 @@ body{
 }
 
 .marinero{
-    position: absolute;
-    height: 130px;
-    width: 130px;
-    margin-left: -16px;
-    margin-top: -8px;
+    height: 80px;
+    width: 80px;
     filter:drop-shadow(0px 3px 3px black);
     transition: transform 0.5s ease-out;
 }
@@ -71,8 +80,33 @@ body{
     transform-style: preserve-3d;
 }
 
+.carousel .promo{
+    background-color: #B78750;
+}
+
+.lado-a{
+    border-top-left-radius: 15%;
+    border-bottom-left-radius: 15%;
+}
+
 nav div{
     background-color: #dd2727;
+}
+
+.menu{
+    margin-left: -10px;
+}
+
+@media (max-width: 603px){
+    .menu{
+        margin-left: -29px;
+    }
+    .marinero{
+        margin-left: -16px;
+        margin-top: -8px;
+    }
+    
+
 }
 
 nav div .liberty{
@@ -98,6 +132,29 @@ nav div .lobster{
 }
 
 
+.liston{
+    background-image: url(Assets/liston.png);
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center center;
+    transform: rotate(180deg);
+}
+
+.liston h1{
+    margin-top: 4%;
+    transform: rotate(180deg);
+}
+
+.filtros .col-3{
+    border: #B78750;
+    border-style: solid;
+
+}
+
+.filtros .col-3:hover{
+    background-color: #B78750;
+}
+
 .info p{
     color: #B78750;
     border-top: 1px solid #B78750;
@@ -120,9 +177,6 @@ nav div .lobster{
 .about-us h1{
     font-weight: bold;
     text-decoration: underline;
-}
-.about-us p{
-    color: #692D20;
 }
 
 footer .liberty a{
