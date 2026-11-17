@@ -6,6 +6,10 @@ body{
     background-color: #dd2727;
 }
 
+.fondo-oscuro{
+    background-color: #B78750;
+}
+
 .marron-oscuro{
     color: #692D20;
 }
@@ -145,7 +149,7 @@ nav div .lobster{
     transform: rotate(180deg);
 }
 
-.filtros .col-3{
+.borde-marron{
     border: #B78750;
     border-style: solid;
 
