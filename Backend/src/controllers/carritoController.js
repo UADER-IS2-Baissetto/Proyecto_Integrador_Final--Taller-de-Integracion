@@ -29,15 +29,19 @@ const obtenerOCrearCarrito = async (conexion, idCliente) => {
 
 // Obtiene el descuento de la promoción vigente más alta.
 // Si no hay promoción, devuelve 0.
-const obtenerDescuento = async (conexion, idProducto) => {
+const obtenerDescuento = async (conexion, idProducto, unidades) => {
     const resultado = await conexion.query(
         `SELECT valordescuento
          FROM promo
          WHERE idproducto = $1
            AND CURRENT_DATE BETWEEN fechainicio AND fechafin
+           AND (
+               cantidad_producto IS NULL
+               OR $2 >= cantidad_producto
+           )
          ORDER BY valordescuento DESC
          LIMIT 1`,
-        [idProducto]
+        [idProducto, unidades]
     );
 
     if (resultado.rows.length === 0) {
@@ -52,6 +56,7 @@ const obtenerDescuento = async (conexion, idProducto) => {
 
     return descuento;
 };
+
 
 // Consulta el carrito del usuario autenticado.
 const obtenerCarrito = async (req, res) => {
@@ -191,7 +196,11 @@ const agregarProducto = async (req, res) => {
             });
         }
 
-        const descuento = await obtenerDescuento(conexion, idProducto);
+        const descuento = await obtenerDescuento(
+            conexion,
+            idProducto,
+            unidadesFinales
+        );
         let itemResultado;
 
         if (existente.rows.length > 0) {
@@ -331,7 +340,8 @@ const actualizarProducto = async (req, res) => {
 
         const descuento = await obtenerDescuento(
             conexion,
-            item.idproducto
+            item.idproducto,
+            unidades
         );
 
         const actualizado = await conexion.query(

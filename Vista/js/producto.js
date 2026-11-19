@@ -1,0 +1,200 @@
+
+const API_URL = "http://localhost:3000/api";
+
+// Escapa los valores antes de insertarlos en HTML.
+function escaparHTML(valor) {
+    return String(valor ?? "").replace(/[&<>"']/g, caracter => {
+        const caracteres = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;"
+        };
+
+        return caracteres[caracter];
+    });
+}
+
+// Formatea los precios.
+function formatearPrecio(precio) {
+    return new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: "ARS",
+        maximumFractionDigits: 2
+    }).format(Number(precio) || 0);
+}
+
+// Obtiene la imagen del producto.
+function obtenerRutaImagen(ruta) {
+    if (!ruta) return "";
+
+    return `Assets/${String(ruta).replace(/^\/+/, "")}`;
+}
+
+// Genera las estrellas de calificación.
+function mostrarCalificacion(calificacion) {
+    const contenedor = document.getElementById("calificacion-producto");
+
+    if (!contenedor) return;
+
+    if (calificacion === null || calificacion === undefined || calificacion === "") {
+        contenedor.textContent = "Sin calificaciones";
+        return;
+    }
+
+    const valor = Math.max(0, Math.min(5, Math.round(Number(calificacion))));
+
+    const estrellaLlena = "\u2605\uFE0E";
+    const estrellaVacia = "\u2606\uFE0E";
+
+    const estrellas =
+        estrellaLlena.repeat(valor) +
+        estrellaVacia.repeat(5 - valor);
+
+    contenedor.innerHTML = `
+        <span class="estrellas-calificacion" aria-label="${valor} de 5 estrellas">
+            ${estrellas}
+        </span>
+        <span class="numero-calificacion">${valor}/5</span>
+    `;
+}
+
+// Carga un producto según el ID recibido por URL.
+async function cargarProducto() {
+
+    const parametros = new URLSearchParams(window.location.search);
+    const id = parametros.get("id");
+
+    if (!id || !/^[1-9]\d*$/.test(id)) {
+        mostrarError("No se indicó un producto válido.");
+        return;
+    }
+
+    try {
+
+        const respuesta = await fetch(`${API_URL}/productos/${encodeURIComponent(id)}`);
+
+        if (!respuesta.ok) {
+
+            if (respuesta.status === 404) {
+                throw new Error("El producto solicitado no existe.");
+            }
+
+            throw new Error("No se pudo obtener el producto.");
+        }
+
+        const datos = await respuesta.json();
+
+        const producto = datos.producto;
+
+        if (!producto) {
+            throw new Error("No se encontraron los datos del producto.");
+        }
+
+        mostrarProducto(producto);
+
+    } catch (error) {
+
+        console.error("Error al cargar producto:", error);
+
+        mostrarError(error.message);
+    }
+}
+
+// Completa la página con los datos recibidos.
+function mostrarProducto(producto) {
+
+    document.title = `${producto.nombre} - Amargo y Dulce`;
+
+    // Nombre.
+    document.getElementById("nombre-producto").textContent =
+        producto.nombre.replace(/\b\w/g, letra => letra.toUpperCase());
+
+    // Precio.
+    document.getElementById("precio-producto").textContent =
+        formatearPrecio(producto.precio);
+
+    // Sabor.
+    document.getElementById("sabor-producto").textContent =
+        `Sabor: ${producto.sabor || "No especificado"}`;
+
+    // Cantidad de unidades.
+    document.getElementById("cantidad-producto").textContent =
+        `Presentación: ${producto.cantidad} unidades`;
+
+    // Stock.
+    document.getElementById("stock-producto").textContent =
+        Number(producto.stock) > 0 && producto.disponibilidad === true
+            ? `Stock disponible: ${producto.stock}`
+            : "Producto agotado";
+
+    // Calificación con estrellas.
+    mostrarCalificacion(producto.calificacion);
+
+    // Edición especial.
+    document.getElementById("especial-producto").textContent =
+        producto.edicionespecial
+            ? "Edición especial"
+            : "Edición regular";
+
+    // Imagen.
+    const imagen = document.getElementById("imagen-producto");
+
+    imagen.src = obtenerRutaImagen(producto.imagen);
+    imagen.alt = producto.nombre;
+
+    imagen.onerror = () => {
+        imagen.style.display = "none";
+        console.error("No se pudo cargar la imagen:", imagen.src);
+    };
+
+    // Limita la cantidad de compra según el stock.
+    const cantidadCompra = document.getElementById("cantidad-compra");
+
+    cantidadCompra.max = Number(producto.stock) || 1;
+
+    if (Number(producto.stock) <= 0 || producto.disponibilidad !== true) {
+        cantidadCompra.disabled = true;
+        cantidadCompra.value = 0;
+    } else {
+        cantidadCompra.disabled = false;
+        cantidadCompra.min = 1;
+        cantidadCompra.value = 1;
+    }
+}
+
+// Muestra errores en la página.
+function mostrarError(mensaje) {
+
+    document.getElementById("nombre-producto").textContent =
+        "Producto no disponible";
+
+    document.getElementById("precio-producto").textContent = "";
+
+    document.getElementById("sabor-producto").textContent = "";
+
+    document.getElementById("cantidad-producto").textContent = "";
+
+    document.getElementById("stock-producto").textContent = "";
+
+    document.getElementById("calificacion-producto").textContent = "";
+
+    document.getElementById("especial-producto").textContent = "";
+
+    const imagen = document.getElementById("imagen-producto");
+
+    imagen.style.display = "none";
+
+    const contenedor = document.querySelector(".informacion-producto");
+
+    const aviso = document.createElement("p");
+
+    aviso.className = "mensaje-error";
+    aviso.textContent = mensaje;
+
+    contenedor.appendChild(aviso);
+}
+
+// Inicialización.
+document.addEventListener("DOMContentLoaded", cargarProducto);

@@ -2,7 +2,6 @@
 const pool = require("../config/db");
 
 // GET /api/productos
-// Obtiene todos los productos y el nombre de su sabor.
 const obtenerProductos = async (req, res) => {
     try {
         const resultado = await pool.query(`
@@ -16,6 +15,7 @@ const obtenerProductos = async (req, res) => {
                 p.calificacion,
                 p.edicionespecial,
                 p.id_sabor,
+                p.imagen,
                 s.nombre AS sabor
             FROM producto p
             LEFT JOIN sabor s ON s.id = p.id_sabor
@@ -36,7 +36,6 @@ const obtenerProductos = async (req, res) => {
 };
 
 // GET /api/productos/:id
-// Obtiene un producto específico.
 const obtenerProductoPorId = async (req, res) => {
     try {
         const id = Number(req.params.id);
@@ -58,6 +57,7 @@ const obtenerProductoPorId = async (req, res) => {
                 p.calificacion,
                 p.edicionespecial,
                 p.id_sabor,
+                p.imagen,
                 s.nombre AS sabor
             FROM producto p
             LEFT JOIN sabor s ON s.id = p.id_sabor

@@ -1,137 +1,62 @@
-body{
+
+/* ==============================
+   ESTILOS GENERALES
+============================== */
+
+body {
     background-color: #DDB97F;
 }
 
-.rojo{
+.rojo {
     background-color: #dd2727;
 }
 
-.fondo-oscuro{
+.fondo-oscuro {
     background-color: #B78750;
 }
 
-.marron-oscuro{
+.marron-oscuro {
     color: #692D20;
 }
 
-.fondo-marron{
+.fondo-marron {
     background-color: #C69B63;
 }
 
-.liberty{
+.liberty {
     font-family: 'Nuptial Liberty', sans-serif;
     color: white;
 }
 
-.mercado{
-    width: 30px;
+.lobster {
+    font-family: 'Lobster', sans-serif;
 }
 
-.lobster{
-    font-family: 'Lobster', sans-serif;
+.mercado {
+    width: 30px;
 }
 
 .logo {
     position: relative;
 }
 
-.login{
-    background-color: #B78750;
-    border-color: #B78750;
-    border-radius: 35px;
-}
-
-.login label{
-    font-size: 25px;
-    font-weight: bold;
-}
-
-.login button img{
-    width: 15%;
-    padding-right: 3%;
-    padding-bottom: 3%;
-}
-
-.login input{
-    background-color: #d9d9d9;
-    font-family: Arial, Helvetica, sans-serif;
-    width: 90%;
-    align-items: center;
-}
-
-.login button{
-    border-radius: 20px;
-    width: 90%;
-    font-size: 20px;
-}
-
 .volteado {
     transform: scaleX(-1);
 }
 
-.iconos{
-    height: 50px;
-    width: 50px;
-    margin-top: 15%;
-    filter: drop-shadow(2px 1px 16px black);
+.borderless {
+    background-color: #DDB97F;
+    border: none;
 }
 
-.marinero{
-    height: 80px;
-    width: 80px;
-    filter:drop-shadow(0px 3px 3px black);
-    transition: transform 0.5s ease-out;
-}
 
-.marinero:hover{
-    transform: rotateY(180deg);
-    transform-style: preserve-3d;
-}
-
-.carousel .promo{
-    background-color: #B78750;
-}
-
-.lado-a{
-    border-top-left-radius: 15%;
-    border-bottom-left-radius: 15%;
-}
-
-nav div{
-    background-color: #dd2727;
-}
-
-.menu{
-    margin-left: -10px;
-}
-
-@media (max-width: 603px){
-    .menu{
-        margin-left: -29px;
-    }
-    .marinero{
-        margin-left: -16px;
-        margin-top: -8px;
-    }
-    
-
-}
-
-nav div .liberty{
-    font-size: 50px;
-    padding-top: 1%;
-    text-shadow: 2px 2px 2px black;
-}
-
-nav div .lobster{
-    font-size: 30px;
-    padding-top: 10%;
-    text-shadow: 2px 1px 8px black;
-}
+/* ==============================
+   FUENTES
+============================== */
 
 @font-face {
     font-family: 'Nuptial Liberty';
-    src: url('Assets/Nuptial\ Liberty.ttf');
+    src: url('Assets/Nuptial Liberty.ttf');
 }
 
 @font-face {
@@ -140,55 +65,342 @@ nav div .lobster{
 }
 
 
-.liston{
-    background-image: url(Assets/liston.png);
+/* ==============================
+   LOGIN
+============================== */
+
+.login {
+    background-color: #B78750;
+    border-color: #B78750;
+    border-radius: 35px;
+}
+
+.login label {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.login button img {
+    width: 15%;
+    padding-right: 3%;
+    padding-bottom: 3%;
+}
+
+.login input {
+    background-color: #d9d9d9;
+    font-family: Arial, Helvetica, sans-serif;
+    width: 90%;
+    align-items: center;
+}
+
+.login button {
+    border-radius: 20px;
+    width: 90%;
+    font-size: 20px;
+}
+
+
+/* ==============================
+   NAVEGACIÓN
+============================== */
+
+nav div {
+    background-color: #dd2727;
+}
+
+.menu {
+    margin-left: -10px;
+}
+
+nav div .liberty {
+    font-size: 50px;
+    padding-top: 1%;
+    text-shadow: 2px 2px 2px black;
+}
+
+nav div .lobster {
+    font-size: 30px;
+    padding-top: 10%;
+    text-shadow: 2px 1px 8px black;
+}
+
+.iconos {
+    height: 50px;
+    width: 50px;
+    margin-top: 15%;
+    filter: drop-shadow(2px 1px 16px black);
+}
+
+.marinero {
+    height: 80px;
+    width: 80px;
+    filter: drop-shadow(0px 3px 3px black);
+    transition: transform 0.5s ease-out;
+}
+
+.marinero:hover {
+    transform: rotateY(180deg);
+    transform-style: preserve-3d;
+}
+
+@media (max-width: 603px) {
+    .menu {
+        margin-left: -29px;
+    }
+
+    .marinero {
+        margin-left: -16px;
+        margin-top: -8px;
+    }
+}
+
+
+/* ==============================
+   CARRUSEL Y PROMOCIONES
+============================== */
+
+.carousel .promo {
+    background-color: #B78750;
+}
+
+.lado-a {
+    border-top-left-radius: 15%;
+    border-bottom-left-radius: 15%;
+}
+
+.liston {
+    background-image: url('Assets/liston.png');
     background-repeat: no-repeat;
     background-size: 100% 100%;
     background-position: center center;
     transform: rotate(180deg);
 }
 
-.liston h1{
+.liston h1 {
     margin-top: 4%;
     transform: rotate(180deg);
 }
 
-.borde-marron{
-    border: #B78750;
-    border-style: solid;
 
+/* ==============================
+   FILTROS
+============================== */
+
+.borde-marron {
+    border: 1px solid #B78750;
 }
 
-.filtros .col-3:hover{
+.filtros .col-3:hover {
     background-color: #B78750;
 }
 
-.info p{
+.filtros .btn {
+    color: black;
+}
+
+.filtros .btn:focus {
+    box-shadow: none;
+}
+
+.filtros .dropdown-menu {
+    background-color: #DDB97F;
+    border: 1px solid #B78750;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+.filtros .dropdown-item {
+    font-family: 'Lobster', sans-serif;
+    color: #692D20;
+    border-radius: 6px;
+}
+
+.filtros .dropdown-item:hover,
+.filtros .dropdown-item:focus {
+    background-color: #B78750;
+    color: white;
+}
+
+/* Botón limpiar filtros */
+#limpiar-filtros {
+    background-color: #692D20;
+    color: #FFFFFF;
+    border: 1px solid #692D20;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+#limpiar-filtros:hover {
+    background-color: #B78750;
+    border-color: #B78750;
+    color: #FFFFFF;
+}
+
+
+/* ==============================
+   PRODUCTOS
+============================== */
+
+.tarjeta-producto {
+    padding: 12px;
+    overflow: hidden;
+}
+
+.imagen-producto {
+    width: 100%;
+    height: 170px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 12px;
+}
+
+.nombre-producto {
+    text-transform: capitalize;
+}
+
+
+/* ==============================
+   DETALLE DEL PRODUCTO
+============================== */
+
+.imagen-detalle-producto {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    margin: auto;
+}
+
+.informacion-producto {
+    padding: 20px;
+    color: #692D20;
+}
+
+.informacion-producto h1,
+.informacion-producto h2,
+.informacion-producto h3,
+.informacion-producto p,
+.informacion-producto span,
+.informacion-producto label {
+    color: #692D20;
+}
+
+.informacion-producto p {
+    font-size: 18px;
+}
+
+
+/* ==============================
+   CALIFICACIÓN CON ESTRELLAS
+============================== */
+
+.estrellas-calificacion {
+    color: #692D20 !important;
+    -webkit-text-fill-color: #692D20 !important;
+    font-size: 27px;
+    letter-spacing: 3px;
+    font-family: Arial, sans-serif;
+}
+
+.numero-calificacion {
+    color: #692D20 !important;
+    -webkit-text-fill-color: #692D20 !important;
+    font-size: 16px;
+    margin-left: 8px;
+}
+
+
+/* ==============================
+   SELECTOR DE CANTIDAD
+============================== */
+
+
+#cantidad-compra,
+#cantidad-compra.form-control {
+    background-color: #C69B63 !important;
+    color: #692D20 !important;
+    -webkit-text-fill-color: #692D20 !important;
+    border: 2px solid #692D20 !important;
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: none !important;
+    color-scheme: light;
+}
+
+/* Fondo del sector de las flechas en Chrome y Edge */
+#cantidad-compra::-webkit-inner-spin-button,
+#cantidad-compra::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button;
+    opacity: 1;
+    background-color: #B78750 !important;
+    filter: sepia(1) saturate(4) hue-rotate(315deg);
+}
+
+/* Cuando no hay stock */
+#cantidad-compra:disabled {
+    background-color: #B78750 !important;
+    color: #692D20 !important;
+    opacity: 0.7;
+}
+
+
+/* ==============================
+   BOTONES DEL DETALLE
+============================== */
+
+.btn-volver-productos {
+    background-color: #692D20;
+    color: #FFFFFF;
+    border: 1px solid #692D20;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.btn-volver-productos:hover {
+    background-color: #B78750;
+    border-color: #B78750;
+    color: #FFFFFF;
+}
+
+
+/* ==============================
+   MENSAJES
+============================== */
+
+.mensaje-error {
+    color: #692D20;
+    font-weight: bold;
+}
+
+
+/* ==============================
+   NOSOTROS
+============================== */
+
+.about-us h1 {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+
+/* ==============================
+   FOOTER
+============================== */
+
+.info p {
     color: #B78750;
     border-top: 1px solid #B78750;
     padding-top: 15px;
-
 }
 
-.pie a{
+.pie a {
     font-family: "Lobster", sans-serif;
     color: black;
     text-decoration: none;
 }
 
-
-.borderless{
-    background-color: #DDB97F;
-    border: none;
-}
-
-.about-us h1{
-    font-weight: bold;
-    text-decoration: underline;
-}
-
-footer .liberty a{
+footer .liberty a {
     font-size: 25px;
-    color:black;
+    color: black;
     text-decoration: none;
 }

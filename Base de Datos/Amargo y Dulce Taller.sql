@@ -5,7 +5,8 @@ create table Cliente (
     apellido varchar(30) not null,
     correo varchar(30) not null unique,
     contrasena varchar(255) not null,
-    rol varchar(20) not null default 'cliente'
+    rol varchar(20) not null default 'cliente',
+	direccion VARCHAR(255)
 );
 
 create table Localidad (
@@ -38,6 +39,7 @@ create table Producto (
     calificacion int check (calificacion >= 0 and calificacion <= 5),
     edicionespecial boolean not null,
     id_sabor int,
+	imagen varchar(255),
     foreign key (id_sabor) references Sabor(id)
 );
 
@@ -99,14 +101,29 @@ create table Favorito (
     foreign key (idproducto) references Producto(id)
 );
 
-create table Promo (
+Create table Promo (
     id serial primary key,
     idproducto int,
+	nombre varchar(100),
+	descripcion varchar(500),
     fechainicio date not null,
     fechafin date not null,
+	imagen varchar(255),
+	cantidad_producto int,
     valordescuento decimal check (valordescuento > 0),
     foreign key (idproducto) references Producto(id)
 );
+
+-- Eliminar duplicados existentes, si los hubiera
+DELETE FROM favorito a
+USING favorito b
+WHERE a.id > b.id
+  AND a.idcliente = b.idcliente
+  AND a.idproducto = b.idproducto;
+
+-- Impedir que un cliente guarde dos veces el mismo producto
+CREATE UNIQUE INDEX IF NOT EXISTS uq_favorito_cliente_producto
+ON favorito (idcliente, idproducto);
 
 create table Ingreso (
     id serial primary key,
@@ -115,6 +132,15 @@ create table Ingreso (
     cantidadingreso int check (cantidadingreso > 0),
     foreign key (idproducto) references Producto(id)
 );
+
+-------------------- Permisos -------------------------
+alter table promo
+add constraint chk_promo_cantidad
+check (cantidad_producto is null or cantidad_producto > 0);
+
+alter table promo
+add constraint chk_promo_descuento
+check (valordescuento > 0 and valordescuento <= 100);
 
 -------------------------------- Users --------------------------------
 -- create user admin_user with password 'amargoydulce';
@@ -138,6 +164,12 @@ grant insert, update, delete on CarritoProducto to cliente_user;
 
 grant insert on Compra to cliente_user;
 grant insert on CompraProducto to cliente_user;
+
+-- Darle permisos de admin a un usuario --
+--UPDATE cliente
+--SET rol = 'admin'
+--WHERE LOWER(TRIM(correo)) = LOWER('admin@amargoydulce.com')
+--RETURNING id, nombre, apellido, correo, rol;
 
 
 -------------------------------- Triggers --------------------------------
@@ -459,107 +491,111 @@ end;
 $$ language plpgsql;
 
 ------------------- Confirmar compra desde carrito -----------------
-create or replace function confirmar_compra(p_idcliente int)
-returns int as $$
-declare
+
+CREATE OR REPLACE FUNCTION confirmar_compra(p_idcliente int)
+RETURNS int AS $$
+DECLARE
     v_idcarrito int;
     v_idcompra int;
     v_total decimal := 0;
     item record;
-begin
-    -- Buscar y bloquear el carrito valido del cliente
-    select id
-    into v_idcarrito
-    from carrito
-    where idcliente = p_idcliente
-      and valido = true
-    order by id desc
-    limit 1
-    for update;
+BEGIN
+    -- Buscar y bloquear el carrito válido del cliente
+    SELECT id
+    INTO v_idcarrito
+    FROM carrito
+    WHERE idcliente = p_idcliente
+      AND valido = TRUE
+    ORDER BY id DESC
+    LIMIT 1
+    FOR UPDATE;
 
-    if v_idcarrito is null then
-        raise exception 'El cliente no tiene un carrito valido';
-    end if;
+    IF v_idcarrito IS NULL THEN
+        RAISE EXCEPTION 'El cliente no tiene un carrito valido';
+    END IF;
 
     -- Verificar que el carrito tenga productos
-    if not exists (
-        select 1
-        from carritoproducto
-        where idcarrito = v_idcarrito
-    ) then
-        raise exception 'El carrito esta vacio';
-    end if;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM carritoproducto
+        WHERE idcarrito = v_idcarrito
+    ) THEN
+        RAISE EXCEPTION 'El carrito esta vacio';
+    END IF;
 
-    -- Bloquear los productos involucrados para evitar
-    -- modificaciones simultaneas de stock durante la compra
-    perform p.id
-    from producto p
-    join carritoproducto cp on cp.idproducto = p.id
-    where cp.idcarrito = v_idcarrito
-    order by p.id
-    for update of p;
+    -- Bloquear los productos involucrados
+    PERFORM p.id
+    FROM producto p
+    JOIN carritoproducto cp ON cp.idproducto = p.id
+    WHERE cp.idcarrito = v_idcarrito
+    ORDER BY p.id
+    FOR UPDATE OF p;
 
-    -- Validar stock considerando la cantidad total
-    -- de cada producto dentro del carrito
-    for item in
-        select
+    -- Validar stock
+    FOR item IN
+        SELECT
             cp.idproducto,
-            sum(cp.unidades) as unidades,
+            SUM(cp.unidades) AS unidades,
             p.stock
-        from carritoproducto cp
-        join producto p on p.id = cp.idproducto
-        where cp.idcarrito = v_idcarrito
-        group by cp.idproducto, p.stock
-    loop
-        if item.stock < item.unidades then
-            raise exception
+        FROM carritoproducto cp
+        JOIN producto p ON p.id = cp.idproducto
+        WHERE cp.idcarrito = v_idcarrito
+        GROUP BY cp.idproducto, p.stock
+    LOOP
+        IF item.stock < item.unidades THEN
+            RAISE EXCEPTION
                 'Stock insuficiente para el producto ID %',
                 item.idproducto;
-        end if;
-    end loop;
+        END IF;
+    END LOOP;
 
-    -- Calcular el total con precios actuales y promociones vigentes
-    select coalesce(
-        sum(
+    -- Calcular el total respetando la cantidad mínima de cada promoción
+    SELECT COALESCE(
+        SUM(
             cp.unidades * p.precio *
-            (1 - (
-                select coalesce(max(pr.valordescuento), 0)
-                from promo pr
-                where pr.idproducto = p.id
-                  and current_date between pr.fechainicio and pr.fechafin
-            ) / 100)
+            (
+                1 - (
+                    SELECT COALESCE(MAX(pr.valordescuento), 0)
+                    FROM promo pr
+                    WHERE pr.idproducto = p.id
+                      AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+                      AND (
+                          pr.cantidad_producto IS NULL
+                          OR cp.unidades >= pr.cantidad_producto
+                      )
+                ) / 100
+            )
         ),
         0
     )
-    into v_total
-    from carritoproducto cp
-    join producto p on p.id = cp.idproducto
-    where cp.idcarrito = v_idcarrito;
+    INTO v_total
+    FROM carritoproducto cp
+    JOIN producto p ON p.id = cp.idproducto
+    WHERE cp.idcarrito = v_idcarrito;
 
-    if v_total <= 0 then
-        raise exception 'El total de la compra debe ser mayor a cero';
-    end if;
+    IF v_total <= 0 THEN
+        RAISE EXCEPTION 'El total de la compra debe ser mayor a cero';
+    END IF;
 
     -- Crear la compra
-    insert into compra (
+    INSERT INTO compra (
         idcliente,
         estado,
         total,
         fecha,
         descuento
     )
-    values (
+    VALUES (
         p_idcliente,
         'pendiente',
         v_total,
-        current_date,
+        CURRENT_DATE,
         0
     )
-    returning id into v_idcompra;
+    RETURNING id INTO v_idcompra;
 
-    -- Registrar los productos con sus precios actuales
-    -- y descuentos de promociones vigentes
-    insert into compraproducto (
+    -- Registrar los productos y sus descuentos
+    INSERT INTO compraproducto (
         idcompra,
         idproducto,
         unidades,
@@ -567,29 +603,58 @@ begin
         subtotal,
         descuento
     )
-    select
+    SELECT
         v_idcompra,
         p.id,
         cp.unidades,
         p.precio,
         0,
         (
-            select coalesce(max(pr.valordescuento), 0)
-            from promo pr
-            where pr.idproducto = p.id
-              and current_date between pr.fechainicio and pr.fechafin
+            SELECT COALESCE(MAX(pr.valordescuento), 0)
+            FROM promo pr
+            WHERE pr.idproducto = p.id
+              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+              AND (
+                  pr.cantidad_producto IS NULL
+                  OR cp.unidades >= pr.cantidad_producto
+              )
         )
-    from carritoproducto cp
-    join producto p on p.id = cp.idproducto
-    where cp.idcarrito = v_idcarrito;
+    FROM carritoproducto cp
+    JOIN producto p ON p.id = cp.idproducto
+    WHERE cp.idcarrito = v_idcarrito;
 
-    -- El trigger trg_restar_stock_compra descuenta el stock
-    -- automaticamente al insertar los detalles de la compra
+    -- El trigger de CompraProducto descuenta el stock automáticamente
 
     -- Vaciar el carrito
-    delete from carritoproducto
-    where idcarrito = v_idcarrito;
+    DELETE FROM carritoproducto
+    WHERE idcarrito = v_idcarrito;
 
-    return v_idcompra;
-end;
-$$ language plpgsql;
+    RETURN v_idcompra;
+END;
+$$ LANGUAGE plpgsql;
+
+
+---------------- Cargando Imagenes en Productos ----------------
+update producto
+set imagen = 'Productos/coleccion-clasica.png'
+where id_sabor = 1;
+
+update producto
+set imagen = 'Productos/esencia-argentina.png'
+where id_sabor = 2;
+
+update producto
+set imagen = 'Productos/fusion-moderna.png'
+where id_sabor = 3;
+
+update producto
+set imagen = 'Productos/banana.png'
+where id_sabor = 4;
+
+update producto
+set imagen = 'Productos/leche.png'
+where id_sabor = 5;
+
+update producto
+set imagen = 'Productos/mix-tropical.png'
+where id_sabor = 6;

@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>HTML</title>
+  <title>Amargo y Dulce</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
   <link rel="stylesheet" href="estilo.css">
@@ -25,95 +26,46 @@
           <button class="navbar-toggler position-relative" type="button" data-bs-toggle="collapse" data-bs-target="#opciones2">
             <span><img class="iconos pe-2 pt-2" src="Assets/menu.png"></span>
           </button>
-            <div>
-              <div id="opciones2" class="z-1 position-absolute rounded-4 p-3 menu collapse">
-                <ul class="navbar-nav">
-                  <li class="nav-item">
-                    <a class="nav-link lobster fs-5 mb-1" href="index.html">Inicio</a>
-                  </li>
-                  <li>
-                    <a class="nav-link lobster fs-5 mb-1" href="nosotros.html">Nosotros</a>
-                  </li>
-                  <li>
-                    <a class="nav-link lobster fs-5 mb-1" href="">Tu Perfil</a>
-                  </li>
-                  <li>
-                    <a class="nav-link lobster fs-5 mb-1" href="">Salir</a>
-                  </li>
-                </ul>
-              </div>
+          <div>
+            <div id="opciones2" class="z-1 position-absolute rounded-4 p-3 menu collapse">
+              <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link lobster fs-5 mb-1" href="index.html">Inicio</a>
+                </li>
+                <li>
+                  <a class="nav-link lobster fs-5 mb-1" href="nosotros.html">Nosotros</a>
+                </li>
+                <li>
+                  <a class="nav-link lobster fs-5 mb-1" href="">Tu Perfil</a>
+                </li>
+                <li>
+                  <a class="nav-link lobster fs-5 mb-1" href="">Salir</a>
+                </li>
+              </ul>
             </div>
+          </div>
         </div>
+      </div>
     </div>
   </nav>
 
+  <!-- Promociones cargadas desde la base de datos -->
   <div class="container-fluid mt-5">
     <div id="carousel1" class="carousel slide" data-bs-ride="carousel">
-      
-      <div class="carousel-inner px-3">
-        <div class="carousel-item active">
-          <div class="row">
-            <div class="col promo lado-a">
-              <div class="row">
-                <div class="col-xl-5 col-lg-5 col-md-6 col-sm-7 col-9">
-                  <h3 class="text-white lobster rojo text-center rounded-4 mt-4 ms-4">Promoción</h3>
-                </div>
-                <div class="w-100"></div>
-                <div class="col">
-                  <h1 class="display-4 lobster fw-bold text-black ms-4">Día de las madres</h1>
-                </div>
-                <div class="w-100"></div>
-                <div class="col">
-                  <p class="marron-oscuro ms-4">Mama solo hay una no te pierdas esta re promo pibe</p>
-                </div>
-                <div class="w-100"></div>
-                <div class="col-12 mb-3">
-                  <button class="btn btn-dark text white lobster ms-5 rounded-5 text-nowrap">Saber más <span class="bg-white text-black rounded-circle ms-2 ps-1">▶</span></button>
-                </div>
-              </div>
-            </div>
-            <div class="col lado-b align-self-center">
-              <img src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png" class="img-fluid">
-            </div>
-          </div>
-        </div>
-        <div class="carousel-item">
-          <div class="row">
-            <div class="col promo lado-a">
-              <div class="row">
-                <div class="col-xl-5 col-lg-5 col-md-6 col-sm-7 col-9">
-                  <h3 class="text-white lobster rojo text-center rounded-4 mt-4 ms-4">Promoción</h3>
-                </div>
-                <div class="w-100"></div>
-                <div class="col">
-                  <h1 class="display-4 lobster fw-bold text-black ms-4">Día de las madres</h1>
-                </div>
-                <div class="w-100"></div>
-                <div class="col">
-                  <p class="marron-oscuro ms-4">Mama solo hay una no te pierdas esta re promo pibe</p>
-                </div>
-                <div class="w-100"></div>
-                <div class="col-12 mb-3">
-                  <button class="btn btn-dark text white lobster ms-5 rounded-5 text-nowrap">Saber más <span class="bg-white text-black rounded-circle ms-2 ps-1">▶</span></button>
-                </div>
-              </div>
-            </div>
-            <div class="col lado-b align-self-center">
-              <img src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png" class="img-fluid">
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <a class="carousel-control-prev" href="#carousel1" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          </a>
-          <a class="carousel-control-next" href="#carousel1" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          </a>
-        </div>
+
+      <div class="carousel-inner px-3" id="contenedor-promociones">
+        <!-- Las promociones se generan desde js/inicio.js -->
+      </div>
+
+      <a class="carousel-control-prev" href="#carousel1" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      </a>
+
+      <a class="carousel-control-next" href="#carousel1" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      </a>
+
     </div>
-  </div>
   </div>
 
   <div class="container-fluid mt-4">
@@ -123,65 +75,77 @@
       </div>
     </div>
   </div>
+
   
   <div class="container filtros lobster mt-4">
-    <div class="row text-center">
-          <div class="col-3 borde-marron">
-            <button class="btn btn-lg fs-3">Precio</button>
+      <div class="row text-center">
+
+          <!-- Precio -->
+          <div class="col-3 borde-marron dropdown">
+              <button class="btn btn-lg fs-3 dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown">
+                  Precio
+              </button>
+              <ul class="dropdown-menu">
+                  <li><button class="dropdown-item" data-filtro="precio" data-valor="menor">Menor a mayor</button></li>
+                  <li><button class="dropdown-item" data-filtro="precio" data-valor="mayor">Mayor a menor</button></li>
+              </ul>
           </div>
-          <div class="col-3 text-break borde-marron">
-            <button class="btn fs-3">Disponibilidad</button>
+
+          <!-- Disponibilidad -->
+          <div class="col-3 borde-marron dropdown">
+              <button class="btn fs-3 dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown">
+                  Disponibilidad
+              </button>
+              <ul class="dropdown-menu">
+                  <li><button class="dropdown-item" data-filtro="disponibilidad" data-valor="disponible">Disponible</button></li>
+                  <li><button class="dropdown-item" data-filtro="disponibilidad" data-valor="agotado">Agotado</button></li>
+              </ul>
           </div>
-          <div class="col-3 borde-marron">
-            <button class="btn fs-3">Sabor</button>            
+
+          <!-- Sabor -->
+          <div class="col-3 borde-marron dropdown">
+              <button class="btn fs-3 dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown">
+                  Sabor
+              </button>
+              <ul class="dropdown-menu" id="opciones-sabores">
+                  <!-- Se completa desde PostgreSQL -->
+              </ul>
           </div>
-          <div class="col-3 borde-marron">
-            <button class="btn fs-3">Edición especial</button>
+
+          <!-- Edición especial -->
+          <div class="col-3 borde-marron dropdown">
+              <button class="btn fs-3 dropdown-toggle"
+                      type="button"
+                      data-bs-toggle="dropdown">
+                  Edición especial
+              </button>
+              <ul class="dropdown-menu">
+                  <li><button class="dropdown-item" data-filtro="especial" data-valor="si">Sí</button></li>
+                  <li><button class="dropdown-item" data-filtro="especial" data-valor="no">No</button></li>
+              </ul>
           </div>
-    </div>
+
+      </div>
+
+      <div class="text-center mt-2">
+          <button class="btn btn-sm btn-dark rounded-4" id="limpiar-filtros">
+              Limpiar filtros
+          </button>
+      </div>
   </div>
 
-  <div class="container-fluid mt-5 mb-5">
-    <div class="row justify-content-around">
-      <div class="col-xl-3 col-3 align-self-center fondo-oscuro rounded-5">
-          <img class="img-fluid" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
-          <h3 class="card-title lobster fw-bold text-center">Producto</h3>
-          <div class="row mt-2 mb-3">
-            <div class="col text-center align-self-center">
-              <h4 class="text-white">Precio</h4>
-            </div>
-            <div class="col text-center align-self-center">
-              <button class="btn btn-sm btn-dark text white lobster rounded-5 text-nowrap">Saber más <span class="bg-white text-black rounded-circle ms-2 ps-1">▶</span></button>
-            </div>
-          </div>
-        </div>
-      <div class="col-xl-3 col-3 align-self-center fondo-oscuro rounded-5">
-          <img class="img-fluid" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
-          <h3 class="card-title lobster fw-bold text-center">Producto</h3>
-          <div class="row mt-2 mb-3">
-            <div class="col text-center align-self-center">
-              <h4 class="text-white">Precio</h4>
-            </div>
-            <div class="col text-center align-self-center">
-              <button class="btn btn-sm btn-dark text white lobster rounded-5 text-nowrap">Saber más <span class="bg-white text-black rounded-circle ms-2 ps-1">▶</span></button>
-            </div>
-          </div>
-        </div>
-      <div class="col-xl-3 col-3 align-self-center fondo-oscuro rounded-5">
-          <img class="img-fluid" src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png">
-          <h3 class="card-title lobster fw-bold text-center">Producto</h3>
-          <div class="row mt-2 mb-3">
-            <div class="col text-center align-self-center">
-              <h4 class="text-white">Precio</h4>
-            </div>
-            <div class="col text-center align-self-center">
-              <button class="btn btn-sm btn-dark text white lobster rounded-5 text-nowrap">Saber más <span class="bg-white text-black rounded-circle ms-2 ps-1">▶</span></button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
+  <!-- Productos cargados desde la base de datos -->
+  <div class="container-fluid mt-5 mb-5">
+    <div class="row justify-content-around" id="contenedor-productos">
+      <!-- Las tarjetas de productos se generan desde js/inicio.js -->
+    </div>
   </div>
 
   <footer>
@@ -201,16 +165,20 @@
           </div>
         </div>
       </div>
-      
+
       <div class="row text-center">
         <div class="col info">
           <p>© 2025 Amargo y Dulce. <br>
-Para reclamos y consultas comunicarse al siguiente numero: +3442 222222</p>
+            Para reclamos y consultas comunicarse al siguiente numero: +3442 222222
+          </p>
         </div>
       </div>
-      
     </div>
   </footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+    crossorigin="anonymous"></script>
+  <script src="js/inicio.js"></script>
 </body>
 </html>

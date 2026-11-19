@@ -161,3 +161,23 @@ Para ejecutar el backend es necesario configurar las variables de entorno en un 
 - Secreto de firma de Webhooks de Mercado Pago.
 
 **Importante:** el archivo `.env` no debe subirse al repositorio de GitHub, ya que contiene credenciales privadas.
+
+
+## Operaciones con rutas, ADMIN
+**Método	    Endpoint	                                Función**
+GET	        /api/admin/productos	                    Ver todos los productos
+POST	    /api/admin/productos	                    Crear un producto
+PUT	        /api/admin/productos/:id	                Modificar un producto
+PATCH	/api/admin/productos/:id/disponibilidad	        Cambiar disponibilidad
+PATCH	 /api/admin/productos/:id/baja	                Dar de baja un producto
+POST	    /api/admin/ingresos	                        Registrar ingreso de stock
+GET	        /api/admin/compras	                        Ver todas las compras
+GET	        /api/admin/compras/:id	                    Ver detalle de una compra
+GET	  /api/admin/ventas/fecha?fecha=2026-11-18	        Consultar ventas por fecha
+GET	        /api/admin/estadisticas	                    Consultar estadísticas
+GET	        /api/admin/promos	                        Ver todas las promociones
+POST	    /api/admin/promos	                        Crear una promoción
+PUT	        /api/admin/promos/:id	                    Modificar una promoción
+DELETE	    /api/admin/promos/:id	                    Eliminar una promoción
+
+Todas estas rutas requieren un token de un usuario cuyo rol sea admin.
