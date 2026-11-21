@@ -1,29 +1,29 @@
-
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Producto - Amargo y Dulce</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-        rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="estilo.css">
 </head>
 
 <body>
 
     <!-- Navegación -->
+
     <nav>
         <div class="container-fluid">
             <div class="row rojo">
 
                 <div class="col-md-1 col-2 align-self-center">
-                    <img class="marinero"
+                    <img
+                        class="marinero"
                         src="Assets/Bananero_de_chocolate_PNG-removebg-preview.png"
-                        alt="Bananero de chocolate">
+                        alt="Amargo y Dulce"
+                    >
                 </div>
 
                 <div class="align-self-center col-xl-9 col-lg-8 col-md-8 col-6">
@@ -40,45 +40,49 @@
 
                 <div class="col-md-1 col-1 offset-md-0 offset-1 text-center">
 
-                    <button class="navbar-toggler position-relative"
+                    <button
+                        class="navbar-toggler position-relative"
                         type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#opciones2"
                         aria-controls="opciones2"
                         aria-expanded="false"
-                        aria-label="Abrir menú">
-
+                        aria-label="Abrir menú"
+                    >
                         <span>
                             <img class="iconos pe-2 pt-2" src="Assets/menu.png" alt="Menú">
                         </span>
                     </button>
 
                     <div>
-                        <div id="opciones2"
-                            class="z-1 position-absolute rounded-4 p-3 menu collapse">
-
+                        <div id="opciones2" class="z-1 position-absolute rounded-4 p-3 menu collapse">
                             <ul class="navbar-nav">
-                                <li class="nav-item">
-                                    <a class="nav-link lobster fs-5 mb-1"
-                                        href="index.html">Inicio</a>
+
+                                <li>
+                                    <a class="nav-link lobster fs-5 mb-1" href="index.html">
+                                        Inicio
+                                    </a>
                                 </li>
 
                                 <li>
-                                    <a class="nav-link lobster fs-5 mb-1"
-                                        href="nosotros.html">Nosotros</a>
+                                    <a class="nav-link lobster fs-5 mb-1" href="nosotros.html">
+                                        Nosotros
+                                    </a>
                                 </li>
 
                                 <li>
-                                    <a class="nav-link lobster fs-5 mb-1"
-                                        href="">Tu Perfil</a>
+                                    <a class="nav-link lobster fs-5 mb-1" href="perfil.html">
+                                        Tu perfil
+                                    </a>
                                 </li>
 
                                 <li>
-                                    <a class="nav-link lobster fs-5 mb-1"
-                                        href="">Salir</a>
+                                    <a class="nav-link lobster fs-5 mb-1" href="#" id="cerrar-sesion">
+                                        Salir
+                                    </a>
                                 </li>
+
                             </ul>
-
                         </div>
                     </div>
 
@@ -88,8 +92,10 @@
         </div>
     </nav>
 
+
     <!-- Información del producto -->
-    <div class="container mt-5">
+
+    <main class="container mt-5 mb-5">
 
         <div class="row mb-4">
             <div class="col">
@@ -99,19 +105,23 @@
             </div>
         </div>
 
+
         <div class="row producto">
 
             <!-- Imagen -->
-            <div class="col-md-8 align-self-center">
 
-                <img id="imagen-producto"
+            <div class="col-md-8 align-self-center">
+                <img
+                    id="imagen-producto"
                     class="img-fluid mx-auto d-block rounded-5 fondo-marron imagen-detalle-producto"
                     src=""
-                    alt="Imagen del producto">
-
+                    alt="Imagen del producto"
+                >
             </div>
 
+
             <!-- Datos -->
+
             <div class="col-md-4 informacion-producto">
 
                 <h2 class="lobster fw-bold">Acerca del producto</h2>
@@ -121,54 +131,64 @@
                 </h3>
 
                 <p id="sabor-producto"></p>
-
                 <p id="cantidad-producto"></p>
-
                 <p id="stock-producto"></p>
-
                 <p id="calificacion-producto"></p>
-
                 <p id="especial-producto"></p>
 
                 <hr>
 
+
                 <div class="row mb-4">
 
-                    <label for="cantidad-compra"
-                        class="col-5 fw-bold">
+                    <label for="cantidad-compra" class="col-5 fw-bold">
                         Cantidad:
                     </label>
 
                     <div class="col">
-                        <input type="number"
+                        <input
+                            type="number"
                             class="form-control selector-cantidad"
                             id="cantidad-compra"
                             value="1"
-                            min="1">
+                            min="1"
+                            step="1"
+                        >
                     </div>
 
                 </div>
 
-                <!-- Botones visuales por ahora -->
+
                 <div class="row">
 
                     <div class="col-12 text-center mb-3">
-                        <button class="btn btn-dark rounded-5" disabled>
+                        <button
+                            id="agregar-carrito"
+                            class="btn btn-dark rounded-5"
+                            type="button"
+                            disabled
+                        >
                             Agregar al carrito
                         </button>
                     </div>
 
                     <div class="col-12 text-center mb-3">
-                        <button class="btn rojo rounded-5" disabled>
-                            Comprar
-                        </button>
+                        <a
+                            href="carrito.html"
+                            class="btn rojo rounded-5 text-white"
+                        >
+                            Ir al carrito
+                        </a>
                     </div>
 
                 </div>
 
+                <div id="mensaje-producto" class="mt-3" role="alert"></div>
+
             </div>
 
         </div>
+
 
         <div class="row mt-4">
             <div class="col">
@@ -178,9 +198,11 @@
             </div>
         </div>
 
-    </div>
+    </main>
+
 
     <!-- Footer -->
+
     <footer>
         <div class="container-fluid">
 
@@ -206,12 +228,13 @@
 
             </div>
 
+
             <div class="row text-center">
                 <div class="col info">
                     <p>
                         © 2025 Amargo y Dulce.
                         <br>
-                        Para reclamos y consultas comunicarse al siguiente numero:
+                        Para reclamos y consultas comunicarse al siguiente número:
                         +3442 222222
                     </p>
                 </div>
@@ -220,8 +243,9 @@
         </div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/navegacion.js"></script>
     <script src="js/producto.js"></script>
 
 </body>

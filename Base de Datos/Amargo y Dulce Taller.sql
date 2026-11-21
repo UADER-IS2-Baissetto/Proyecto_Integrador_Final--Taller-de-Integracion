@@ -289,6 +289,80 @@ before insert or update on Producto
 for each row
 execute function validar_cantidad_producto();
 
+-- =========================================================
+-- 1. Eliminar el descuento automático al insertar productos
+
+DROP TRIGGER IF EXISTS trg_restar_stock_compra ON compraproducto;
+-- La función anterior ya no será utilizada por ese trigger.
+
+-- =========================================================
+-- 2. Descontar stock cuando el pago queda aprobado
+
+CREATE OR REPLACE FUNCTION descontar_stock_compra_pagada()
+RETURNS TRIGGER AS $$
+DECLARE
+    item RECORD;
+BEGIN
+    -- Bloquear y validar todos los productos de la compra.
+    FOR item IN
+        SELECT
+            cp.idproducto,
+            SUM(cp.unidades)::integer AS unidades,
+            p.stock
+        FROM compraproducto cp
+        JOIN producto p ON p.id = cp.idproducto
+        WHERE cp.idcompra = NEW.id
+        GROUP BY cp.idproducto, p.stock
+        ORDER BY cp.idproducto
+        FOR UPDATE OF p
+    LOOP
+        IF item.stock < item.unidades THEN
+            RAISE EXCEPTION
+                'Stock insuficiente para el producto ID %',
+                item.idproducto;
+        END IF;
+    END LOOP;
+
+    -- Descontar las unidades de todos los productos.
+    UPDATE producto p
+    SET stock = p.stock - detalle.unidades
+    FROM (
+        SELECT
+            idproducto,
+            SUM(unidades)::integer AS unidades
+        FROM compraproducto
+        WHERE idcompra = NEW.id
+        GROUP BY idproducto
+    ) detalle
+    WHERE p.id = detalle.idproducto;
+
+    -- Vaciar el carrito válido del cliente únicamente después
+    -- de que el pago haya sido aprobado.
+    DELETE FROM carritoproducto
+    WHERE idcarrito IN (
+        SELECT id
+        FROM carrito
+        WHERE idcliente = NEW.idcliente
+          AND valido = TRUE
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- =========================================================
+-- 3. Ejecutar el descuento solo al pasar de pendiente a pagada
+-- =========================================================
+
+DROP TRIGGER IF EXISTS trg_descontar_stock_compra_pagada ON compra;
+
+CREATE TRIGGER trg_descontar_stock_compra_pagada
+AFTER UPDATE OF estado ON compra
+FOR EACH ROW
+WHEN (OLD.estado = 'pendiente' AND NEW.estado = 'pagada')
+EXECUTE FUNCTION descontar_stock_compra_pagada();
+
 -------------------------------- Inserts --------------------------------
 insert into Sabor (nombre) values
 ('coleccion clasica'),
@@ -491,16 +565,15 @@ end;
 $$ language plpgsql;
 
 ------------------- Confirmar compra desde carrito -----------------
-
 CREATE OR REPLACE FUNCTION confirmar_compra(p_idcliente int)
 RETURNS int AS $$
 DECLARE
     v_idcarrito int;
     v_idcompra int;
     v_total decimal := 0;
-    item record;
+    item RECORD;
 BEGIN
-    -- Buscar y bloquear el carrito válido del cliente
+    -- Buscar y bloquear el carrito válido del cliente.
     SELECT id
     INTO v_idcarrito
     FROM carrito
@@ -511,19 +584,20 @@ BEGIN
     FOR UPDATE;
 
     IF v_idcarrito IS NULL THEN
-        RAISE EXCEPTION 'El cliente no tiene un carrito valido';
+        RAISE EXCEPTION 'El cliente no tiene un carrito válido';
     END IF;
 
-    -- Verificar que el carrito tenga productos
+    -- Verificar que el carrito tenga productos.
     IF NOT EXISTS (
         SELECT 1
         FROM carritoproducto
         WHERE idcarrito = v_idcarrito
     ) THEN
-        RAISE EXCEPTION 'El carrito esta vacio';
+        RAISE EXCEPTION 'El carrito está vacío';
     END IF;
 
-    -- Bloquear los productos involucrados
+    -- Bloquear los productos involucrados para evitar
+    -- que se modifique su stock durante la validación.
     PERFORM p.id
     FROM producto p
     JOIN carritoproducto cp ON cp.idproducto = p.id
@@ -531,7 +605,7 @@ BEGIN
     ORDER BY p.id
     FOR UPDATE OF p;
 
-    -- Validar stock
+    -- Validar que haya stock suficiente.
     FOR item IN
         SELECT
             cp.idproducto,
@@ -549,7 +623,8 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- Calcular el total respetando la cantidad mínima de cada promoción
+    -- Calcular el total respetando la cantidad mínima
+    -- requerida por cada promoción.
     SELECT COALESCE(
         SUM(
             cp.unidades * p.precio *
@@ -577,7 +652,7 @@ BEGIN
         RAISE EXCEPTION 'El total de la compra debe ser mayor a cero';
     END IF;
 
-    -- Crear la compra
+    -- Crear la compra como pendiente.
     INSERT INTO compra (
         idcliente,
         estado,
@@ -594,7 +669,8 @@ BEGIN
     )
     RETURNING id INTO v_idcompra;
 
-    -- Registrar los productos y sus descuentos
+    -- Registrar los productos y sus descuentos.
+    -- IMPORTANTE: ya no se descuenta el stock en esta inserción.
     INSERT INTO compraproducto (
         idcompra,
         idproducto,
@@ -623,11 +699,8 @@ BEGIN
     JOIN producto p ON p.id = cp.idproducto
     WHERE cp.idcarrito = v_idcarrito;
 
-    -- El trigger de CompraProducto descuenta el stock automáticamente
-
-    -- Vaciar el carrito
-    DELETE FROM carritoproducto
-    WHERE idcarrito = v_idcarrito;
+    -- El carrito y el stock se mantienen sin cambios
+    -- hasta que Mercado Pago confirme el pago.
 
     RETURN v_idcompra;
 END;

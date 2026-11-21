@@ -1,4 +1,3 @@
-
 /* ==============================
    ESTILOS GENERALES
 ============================== */
@@ -110,6 +109,7 @@ nav div {
 
 .menu {
     margin-left: -10px;
+    z-index: 1050;
 }
 
 nav div .liberty {
@@ -159,14 +159,140 @@ nav div .lobster {
    CARRUSEL Y PROMOCIONES
 ============================== */
 
-.carousel .promo {
-    background-color: #B78750;
+#carousel1 {
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-.lado-a {
-    border-top-left-radius: 15%;
-    border-bottom-left-radius: 15%;
+#carousel1 .carousel-inner {
+    max-width: 1000px;
+    margin: 0 auto;
 }
+
+#carousel1 .carousel-item {
+    padding: 0;
+}
+
+.carousel .promo {
+    background-color: #B78750;
+    color: white;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.promo-contenido {
+    min-height: 220px;
+    max-height: 240px;
+    margin: 0 auto;
+    overflow: hidden;
+    border-radius: 18px;
+}
+
+.promo-texto {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px 28px;
+}
+
+.promo-etiqueta {
+    display: inline-block;
+    width: fit-content;
+    background-color: #dd2727;
+    color: white;
+    padding: 5px 20px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+.promo-titulo {
+    color: white;
+    font-size: clamp(25px, 3vw, 38px);
+    margin-bottom: 10px;
+}
+
+.promo-descripcion {
+    color: white;
+    font-size: 17px;
+    margin-bottom: 0;
+}
+
+.promo-imagen-contenedor {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 25px;
+}
+
+.promo-imagen {
+    display: block;
+    width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    object-position: center;
+}
+
+.promo-mensaje {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    text-align: center;
+    background-color: #692D20;
+    color: white;
+    border-radius: 18px;
+}
+
+#carousel1 .carousel-control-prev,
+#carousel1 .carousel-control-next {
+    width: 5%;
+}
+
+@media (max-width: 767px) {
+    .promo-contenido {
+        min-height: 0;
+        max-height: none;
+    }
+
+    .promo-texto {
+        padding: 18px 22px 10px;
+        text-align: center;
+        align-items: center;
+    }
+
+    .promo-etiqueta {
+        margin-bottom: 8px;
+        font-size: 17px;
+    }
+
+    .promo-titulo {
+        font-size: 27px;
+    }
+
+    .promo-descripcion {
+        font-size: 15px;
+    }
+
+    .promo-imagen-contenedor {
+        padding: 5px 20px 18px;
+    }
+
+    .promo-imagen {
+        max-height: 140px;
+    }
+
+    #carousel1 .carousel-control-prev,
+    #carousel1 .carousel-control-next {
+        width: 8%;
+    }
+}
+
+
+/* ==============================
+   LISTÓN
+============================== */
 
 .liston {
     background-image: url('Assets/liston.png');
@@ -177,10 +303,9 @@ nav div .lobster {
 }
 
 .liston h1 {
-    margin-top: 4%;
+    margin-top: 3%;
     transform: rotate(180deg);
 }
-
 
 /* ==============================
    FILTROS
@@ -213,6 +338,8 @@ nav div .lobster {
     font-family: 'Lobster', sans-serif;
     color: #692D20;
     border-radius: 6px;
+    text-align: center;
+    width: 100%;
 }
 
 .filtros .dropdown-item:hover,
@@ -222,6 +349,7 @@ nav div .lobster {
 }
 
 /* Botón limpiar filtros */
+
 #limpiar-filtros {
     background-color: #692D20;
     color: #FFFFFF;
@@ -236,19 +364,37 @@ nav div .lobster {
     color: #FFFFFF;
 }
 
-
 /* ==============================
    PRODUCTOS
 ============================== */
 
+#contenedor-productos {
+    padding-left: 3%;
+    padding-right: 3%;
+}
+
 .tarjeta-producto {
-    padding: 12px;
+    width: 100%;
+    min-height: 330px;
+    max-width: 290px;
+    margin: 0 auto;
+    padding: 16px;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    box-shadow: 0 3px 8px rgba(70, 35, 15, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tarjeta-producto:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 14px rgba(70, 35, 15, 0.25);
 }
 
 .imagen-producto {
     width: 100%;
-    height: 170px;
+    height: 145px;
     object-fit: contain;
     display: block;
     margin: 0 auto 12px;
@@ -256,6 +402,56 @@ nav div .lobster {
 
 .nombre-producto {
     text-transform: capitalize;
+    font-size: 23px;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.precio-producto {
+    margin-top: auto;
+}
+
+.precio-producto h4 {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.estado-producto {
+    font-size: 13px;
+    margin-bottom: 12px;
+    font-weight: bold;
+}
+
+.estado-producto.agotado {
+    color: #7A0000;
+}
+
+.estado-producto.pocas-unidades {
+    color: #692D20;
+}
+
+.estado-producto.disponible {
+    color: #245B25;
+}
+
+@media (max-width: 575px) {
+    .tarjeta-producto {
+        min-height: 300px;
+        padding: 12px;
+    }
+
+    .imagen-producto {
+        height: 120px;
+    }
+
+    .nombre-producto {
+        font-size: 19px;
+        min-height: 45px;
+    }
 }
 
 
@@ -314,7 +510,6 @@ nav div .lobster {
    SELECTOR DE CANTIDAD
 ============================== */
 
-
 #cantidad-compra,
 #cantidad-compra.form-control {
     background-color: #C69B63 !important;
@@ -328,6 +523,7 @@ nav div .lobster {
 }
 
 /* Fondo del sector de las flechas en Chrome y Edge */
+
 #cantidad-compra::-webkit-inner-spin-button,
 #cantidad-compra::-webkit-outer-spin-button {
     -webkit-appearance: inner-spin-button;
@@ -337,6 +533,7 @@ nav div .lobster {
 }
 
 /* Cuando no hay stock */
+
 #cantidad-compra:disabled {
     background-color: #B78750 !important;
     color: #692D20 !important;

@@ -1,4 +1,3 @@
-
 const API_URL = "http://localhost:3000/api";
 
 let productosCargados = [];
@@ -33,7 +32,6 @@ function obtenerSabor(producto) {
         return sabor.replace(/\s+\d+\s*$/, "").trim().toLowerCase();
     }
 
-    // Alternativa si el backend no devuelve el campo sabor.
     return String(producto.nombre || "")
         .replace(/\s+\d+\s*$/, "")
         .trim()
@@ -95,7 +93,8 @@ function cargarOpcionesSabores() {
 
     const sabores = [
         ...new Set(
-            productosCargados.map(producto => obtenerSabor(producto))
+            productosCargados
+                .map(producto => obtenerSabor(producto))
                 .filter(Boolean)
         )
     ];
@@ -121,6 +120,16 @@ function cargarOpcionesSabores() {
     `;
 }
 
+// Normaliza los textos para comparar sabores sin diferencias de mayúsculas o espacios.
+function normalizarTexto(texto) {
+    return String(texto || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ");
+}
+
 // Aplica todos los filtros seleccionados.
 function aplicarFiltros() {
     let productosFiltrados = [...productosCargados];
@@ -144,9 +153,15 @@ function aplicarFiltros() {
 
     // Sabor.
     if (filtrosActivos.sabor) {
-        productosFiltrados = productosFiltrados.filter(
-            producto => obtenerSabor(producto) === filtrosActivos.sabor
-        );
+        const saborSeleccionado = normalizarTexto(filtrosActivos.sabor);
+
+        productosFiltrados = productosFiltrados.filter(producto => {
+            const saborProducto = normalizarTexto(
+                producto.sabor || obtenerSabor(producto)
+            );
+
+            return saborProducto === saborSeleccionado;
+        });
     }
 
     // Edición especial.
@@ -280,12 +295,10 @@ async function cargarPromociones() {
         if (promocionesUnicas.length === 0) {
             contenedor.innerHTML = `
                 <div class="carousel-item active">
-                    <div class="row">
-                        <div class="col promo lado-a">
-                            <h1 class="display-4 lobster fw-bold text-black ms-4">
-                                No hay promociones vigentes
-                            </h1>
-                        </div>
+                    <div class="promo-mensaje">
+                        <h2 class="lobster fw-bold mb-0">
+                            No hay promociones vigentes
+                        </h2>
                     </div>
                 </div>
             `;
@@ -303,43 +316,31 @@ async function cargarPromociones() {
             const imagen = obtenerRutaImagen(promo.imagen);
 
             elemento.innerHTML = `
-                <div class="row">
-                    <div class="col promo lado-a">
-                        <div class="row">
+                <div class="row promo promo-contenido g-0">
 
-                            <div class="col-xl-5 col-lg-5 col-md-6 col-sm-7 col-9">
-                                <h3 class="text-white lobster rojo text-center rounded-4 mt-4 ms-4">
-                                    Promoción
-                                </h3>
-                            </div>
+                    <div class="col-md-6 promo-texto">
+                        <h3 class="promo-etiqueta lobster">
+                            Promoción
+                        </h3>
 
-                            <div class="w-100"></div>
+                        <h2 class="promo-titulo lobster fw-bold">
+                            ${nombre}
+                        </h2>
 
-                            <div class="col">
-                                <h1 class="display-4 lobster fw-bold text-black ms-4">
-                                    ${nombre}
-                                </h1>
-                            </div>
-
-                            <div class="w-100"></div>
-
-                            <div class="col">
-                                <p class="marron-oscuro ms-4">
-                                    ${descripcion}
-                                </p>
-                            </div>
-
-                        </div>
+                        <p class="promo-descripcion">
+                            ${descripcion}
+                        </p>
                     </div>
 
-                    <div class="col lado-b align-self-center">
+                    <div class="col-md-6 promo-imagen-contenedor">
                         <img
                             src="${escaparHTML(imagen)}"
-                            class="img-fluid"
+                            class="promo-imagen"
                             alt="${nombre}"
                             onerror="this.style.display='none'"
                         >
                     </div>
+
                 </div>
             `;
 
@@ -360,12 +361,10 @@ async function cargarPromociones() {
 
         contenedor.innerHTML = `
             <div class="carousel-item active">
-                <div class="row">
-                    <div class="col promo lado-a">
-                        <h1 class="display-4 lobster fw-bold text-black ms-4">
-                            No se pudieron cargar las promociones
-                        </h1>
-                    </div>
+                <div class="promo-mensaje">
+                    <h2 class="lobster fw-bold mb-0">
+                        No se pudieron cargar las promociones
+                    </h2>
                 </div>
             </div>
         `;

@@ -1,7 +1,9 @@
 
 const API_URL = "http://localhost:3000/api";
 
-// Escapa los valores antes de insertarlos en HTML.
+let productoActual = null;
+
+// Escapa valores antes de insertarlos en HTML.
 function escaparHTML(valor) {
     return String(valor ?? "").replace(/[&<>"']/g, caracter => {
         const caracteres = {
@@ -60,9 +62,19 @@ function mostrarCalificacion(calificacion) {
     `;
 }
 
+// Muestra mensajes.
+function mostrarMensajeProducto(texto, tipo = "danger") {
+    const contenedor = document.getElementById("mensaje-producto");
+
+    contenedor.innerHTML = `
+        <div class="alert alert-${tipo}" role="alert">
+            ${escaparHTML(texto)}
+        </div>
+    `;
+}
+
 // Carga un producto según el ID recibido por URL.
 async function cargarProducto() {
-
     const parametros = new URLSearchParams(window.location.search);
     const id = parametros.get("id");
 
@@ -72,11 +84,11 @@ async function cargarProducto() {
     }
 
     try {
-
-        const respuesta = await fetch(`${API_URL}/productos/${encodeURIComponent(id)}`);
+        const respuesta = await fetch(
+            `${API_URL}/productos/${encodeURIComponent(id)}`
+        );
 
         if (!respuesta.ok) {
-
             if (respuesta.status === 404) {
                 throw new Error("El producto solicitado no existe.");
             }
@@ -85,60 +97,58 @@ async function cargarProducto() {
         }
 
         const datos = await respuesta.json();
-
         const producto = datos.producto;
 
         if (!producto) {
             throw new Error("No se encontraron los datos del producto.");
         }
 
+        productoActual = producto;
+
         mostrarProducto(producto);
 
     } catch (error) {
-
         console.error("Error al cargar producto:", error);
-
         mostrarError(error.message);
     }
 }
 
 // Completa la página con los datos recibidos.
 function mostrarProducto(producto) {
-
     document.title = `${producto.nombre} - Amargo y Dulce`;
 
-    // Nombre.
     document.getElementById("nombre-producto").textContent =
         producto.nombre.replace(/\b\w/g, letra => letra.toUpperCase());
 
-    // Precio.
     document.getElementById("precio-producto").textContent =
         formatearPrecio(producto.precio);
 
-    // Sabor.
     document.getElementById("sabor-producto").textContent =
         `Sabor: ${producto.sabor || "No especificado"}`;
 
-    // Cantidad de unidades.
     document.getElementById("cantidad-producto").textContent =
         `Presentación: ${producto.cantidad} unidades`;
 
-    // Stock.
-    document.getElementById("stock-producto").textContent =
-        Number(producto.stock) > 0 && producto.disponibilidad === true
-            ? `Stock disponible: ${producto.stock}`
-            : "Producto agotado";
+    const stock = Number(producto.stock) || 0;
+    const disponible = producto.disponibilidad === true && stock > 0;
 
-    // Calificación con estrellas.
+    const textoStock = document.getElementById("stock-producto");
+
+    if (disponible) {
+        textoStock.textContent = stock <= 5
+            ? `¡Quedan pocas unidades! Stock disponible: ${stock}`
+            : `Stock disponible: ${stock}`;
+    } else {
+        textoStock.textContent = "Producto agotado";
+    }
+
     mostrarCalificacion(producto.calificacion);
 
-    // Edición especial.
     document.getElementById("especial-producto").textContent =
         producto.edicionespecial
             ? "Edición especial"
             : "Edición regular";
 
-    // Imagen.
     const imagen = document.getElementById("imagen-producto");
 
     imagen.src = obtenerRutaImagen(producto.imagen);
@@ -149,52 +159,128 @@ function mostrarProducto(producto) {
         console.error("No se pudo cargar la imagen:", imagen.src);
     };
 
-    // Limita la cantidad de compra según el stock.
     const cantidadCompra = document.getElementById("cantidad-compra");
+    const botonAgregar = document.getElementById("agregar-carrito");
 
-    cantidadCompra.max = Number(producto.stock) || 1;
+    cantidadCompra.min = 1;
+    cantidadCompra.max = stock;
+    cantidadCompra.value = disponible ? 1 : 0;
+    cantidadCompra.disabled = !disponible;
 
-    if (Number(producto.stock) <= 0 || producto.disponibilidad !== true) {
-        cantidadCompra.disabled = true;
-        cantidadCompra.value = 0;
-    } else {
-        cantidadCompra.disabled = false;
-        cantidadCompra.min = 1;
-        cantidadCompra.value = 1;
+    botonAgregar.disabled = !disponible;
+}
+
+// Agrega el producto al carrito del usuario autenticado.
+async function agregarAlCarrito() {
+    if (!productoActual) {
+        mostrarMensajeProducto("Todavía no se cargó el producto.");
+        return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        mostrarMensajeProducto(
+            "Necesitás iniciar sesión para agregar productos al carrito.",
+            "warning"
+        );
+
+        return;
+    }
+
+    const cantidad = Number(
+        document.getElementById("cantidad-compra").value
+    );
+
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+        mostrarMensajeProducto("Ingresá una cantidad válida.");
+        return;
+    }
+
+    if (cantidad > Number(productoActual.stock)) {
+        mostrarMensajeProducto(
+            `No hay suficiente stock. Disponibles: ${productoActual.stock}.`
+        );
+
+        return;
+    }
+
+    const boton = document.getElementById("agregar-carrito");
+
+    boton.disabled = true;
+    boton.textContent = "Agregando...";
+
+    try {
+        const respuesta = await fetch(`${API_URL}/carrito/items`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                idproducto: productoActual.id,
+                unidades: cantidad
+            })
+        });
+
+        const datos = await respuesta.json().catch(() => ({}));
+
+        if (!respuesta.ok) {
+            if (respuesta.status === 401) {
+                throw new Error("Tu sesión venció. Iniciá sesión nuevamente.");
+            }
+
+            throw new Error(datos.mensaje || "No se pudo agregar el producto.");
+        }
+
+        mostrarMensajeProducto(
+            "¡Producto agregado correctamente a tu carrito!",
+            "success"
+        );
+
+        boton.textContent = "¡Agregado!";
+
+        setTimeout(() => {
+            boton.textContent = "Agregar al carrito";
+            boton.disabled = false;
+        }, 1500);
+
+    } catch (error) {
+        console.error("Error al agregar al carrito:", error);
+
+        mostrarMensajeProducto(error.message);
+
+        boton.textContent = "Agregar al carrito";
+        boton.disabled = false;
     }
 }
 
 // Muestra errores en la página.
 function mostrarError(mensaje) {
-
     document.getElementById("nombre-producto").textContent =
         "Producto no disponible";
 
     document.getElementById("precio-producto").textContent = "";
-
     document.getElementById("sabor-producto").textContent = "";
-
     document.getElementById("cantidad-producto").textContent = "";
-
     document.getElementById("stock-producto").textContent = "";
-
     document.getElementById("calificacion-producto").textContent = "";
-
     document.getElementById("especial-producto").textContent = "";
 
-    const imagen = document.getElementById("imagen-producto");
+    document.getElementById("imagen-producto").style.display = "none";
 
-    imagen.style.display = "none";
+    document.getElementById("cantidad-compra").disabled = true;
+    document.getElementById("agregar-carrito").disabled = true;
 
-    const contenedor = document.querySelector(".informacion-producto");
-
-    const aviso = document.createElement("p");
-
-    aviso.className = "mensaje-error";
-    aviso.textContent = mensaje;
-
-    contenedor.appendChild(aviso);
+    mostrarMensajeProducto(mensaje);
 }
 
 // Inicialización.
-document.addEventListener("DOMContentLoaded", cargarProducto);
+document.addEventListener("DOMContentLoaded", () => {
+    cargarProducto();
+
+    document.getElementById("agregar-carrito").addEventListener(
+        "click",
+        agregarAlCarrito
+    );
+});

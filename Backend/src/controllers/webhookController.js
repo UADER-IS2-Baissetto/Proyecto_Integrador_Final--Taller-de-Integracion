@@ -1,7 +1,8 @@
+
 const crypto = require("crypto");
 const pool = require("../config/db");
 
-// Validar la firma enviada por Mercado Pago
+// Validar la firma enviada por Mercado Pago.
 const validarFirma = (req) => {
     const firma = req.headers["x-signature"];
     const requestId = req.headers["x-request-id"];
@@ -16,6 +17,7 @@ const validarFirma = (req) => {
 
     firma.split(",").forEach((parte) => {
         const [clave, valor] = parte.trim().split("=");
+
         if (clave && valor) {
             partes[clave] = valor;
         }
@@ -25,8 +27,8 @@ const validarFirma = (req) => {
         return false;
     }
 
-    // Mercado Pago utiliza el ID en minúsculas al construir el manifest
-    const manifest = `id:${String(dataId).toLowerCase()};request-id:${requestId};ts:${partes.ts};`;
+    const manifest =
+        `id:${String(dataId).toLowerCase()};request-id:${requestId};ts:${partes.ts};`;
 
     const hashCalculado = crypto
         .createHmac("sha256", secreto)
@@ -48,7 +50,8 @@ const validarFirma = (req) => {
     );
 };
 
-// Consultar la orden directamente en Mercado Pago
+
+// Consultar la orden directamente en Mercado Pago.
 const consultarOrdenMP = async (idOrden) => {
     const respuesta = await fetch(
         `https://api.mercadopago.com/v1/orders/${encodeURIComponent(idOrden)}`,
@@ -71,10 +74,12 @@ const consultarOrdenMP = async (idOrden) => {
     return datos;
 };
 
-// Procesar una notificación de Mercado Pago
+
+// Procesar una notificación de Mercado Pago.
 const recibirNotificacion = async (req, res) => {
     if (!process.env.MP_WEBHOOK_SECRET || !process.env.MP_ACCESS_TOKEN) {
         console.error("Faltan credenciales de Mercado Pago en el .env");
+
         return res.status(500).json({
             mensaje: "La integración de Mercado Pago no está configurada"
         });
@@ -82,6 +87,7 @@ const recibirNotificacion = async (req, res) => {
 
     if (!validarFirma(req)) {
         console.error("Notificación rechazada: firma inválida");
+
         return res.status(401).json({
             mensaje: "Firma de notificación inválida"
         });
@@ -90,7 +96,7 @@ const recibirNotificacion = async (req, res) => {
     const tipo = req.query.type || req.body?.type;
     const idOrden = req.query["data.id"] || req.body?.data?.id;
 
-    // Este endpoint está destinado exclusivamente a órdenes
+    // Este endpoint está destinado exclusivamente a órdenes.
     if (tipo && tipo !== "order") {
         return res.status(200).json({
             mensaje: "Notificación ignorada: tipo de evento no procesado"
@@ -106,7 +112,7 @@ const recibirNotificacion = async (req, res) => {
     let conexion;
 
     try {
-        // No confiamos en el estado del body: consultamos la API oficial
+        // Consultar el estado real de la orden.
         const orden = await consultarOrdenMP(idOrden);
 
         if (String(orden.id) !== String(idOrden)) {
@@ -119,6 +125,7 @@ const recibirNotificacion = async (req, res) => {
 
         if (!Number.isInteger(idCompra) || idCompra <= 0) {
             console.error("La orden no tiene una referencia de compra válida");
+
             return res.status(200).json({
                 mensaje: "Orden ignorada: referencia externa no válida"
             });
@@ -137,6 +144,7 @@ const recibirNotificacion = async (req, res) => {
 
         if (resultadoCompra.rows.length === 0) {
             await conexion.query("ROLLBACK");
+
             return res.status(200).json({
                 mensaje: "No existe una compra asociada a esta orden"
             });
@@ -144,15 +152,16 @@ const recibirNotificacion = async (req, res) => {
 
         const compra = resultadoCompra.rows[0];
 
-        // Comprobar que la orden consultada sea la guardada para esa compra
+        // Verificar que la orden sea la asociada a esta compra.
         if (String(compra.mp_order_id) !== String(orden.id)) {
             await conexion.query("ROLLBACK");
+
             return res.status(200).json({
                 mensaje: "La orden no corresponde a la compra indicada"
             });
         }
 
-        // Verificar que el importe de Mercado Pago coincida con PostgreSQL
+        // Verificar que el importe coincida con PostgreSQL.
         const totalCompraCentavos = Math.round(Number(compra.total) * 100);
         const totalOrdenCentavos = Math.round(Number(orden.total_amount) * 100);
 
@@ -162,6 +171,7 @@ const recibirNotificacion = async (req, res) => {
             totalCompraCentavos !== totalOrdenCentavos
         ) {
             await conexion.query("ROLLBACK");
+
             console.error("El importe de la orden no coincide con la compra", {
                 idCompra,
                 totalCompra: compra.total,
@@ -176,7 +186,7 @@ const recibirNotificacion = async (req, res) => {
         const estadoMP = orden.status;
         const detalleMP = orden.status_detail || null;
 
-        // Guardar siempre el último estado informado por Mercado Pago
+        // Guardar el último estado informado por Mercado Pago.
         await conexion.query(
             `UPDATE compra
              SET mp_status = $1,
@@ -185,7 +195,9 @@ const recibirNotificacion = async (req, res) => {
             [estadoMP, detalleMP, idCompra]
         );
 
-        // Pago acreditado
+        // Pago aprobado.
+        // El trigger SQL descuenta el stock y vacía el carrito
+        // al producirse el cambio de pendiente a pagada.
         if (estadoMP === "processed") {
             if (compra.estado === "pendiente") {
                 await conexion.query(
@@ -203,28 +215,16 @@ const recibirNotificacion = async (req, res) => {
             return res.status(200).json({
                 mensaje: "Estado de pago actualizado",
                 compra: idCompra,
-                estado: "pagada",
+                estado: compra.estado === "pendiente" ? "pagada" : compra.estado,
                 mp_status: estadoMP,
                 mp_status_detail: detalleMP
             });
         }
 
-        // Orden cancelada o fallida: devolver stock una sola vez
+        // Orden cancelada o fallida.
+        // No se devuelve stock porque todavía no se había descontado.
         if (estadoMP === "canceled" || estadoMP === "failed") {
             if (compra.estado === "pendiente") {
-                await conexion.query(
-                    `UPDATE producto p
-                     SET stock = p.stock + detalle.unidades
-                     FROM (
-                         SELECT idproducto, SUM(unidades)::integer AS unidades
-                         FROM compraproducto
-                         WHERE idcompra = $1
-                         GROUP BY idproducto
-                     ) detalle
-                     WHERE p.id = detalle.idproducto`,
-                    [idCompra]
-                );
-
                 await conexion.query(
                     `UPDATE compra
                      SET estado = 'cancelada'
@@ -246,8 +246,9 @@ const recibirNotificacion = async (req, res) => {
             });
         }
 
-        // Reembolso o contracargo: registrar el estado, sin reponer stock
-        // automáticamente porque el producto podría haber sido entregado.
+        // Reembolso o contracargo.
+        // No se repone stock automáticamente porque el producto
+        // podría haber sido entregado.
         if (estadoMP === "refunded" || estadoMP === "charged_back") {
             const nuevoEstado =
                 estadoMP === "refunded" ? "reintegrada" : "contracargo";
@@ -270,7 +271,7 @@ const recibirNotificacion = async (req, res) => {
             });
         }
 
-        // created, processing y action_required no son estados finales
+        // created, processing y action_required no son estados finales.
         await conexion.query("COMMIT");
 
         return res.status(200).json({
@@ -292,7 +293,7 @@ const recibirNotificacion = async (req, res) => {
 
         console.error("Error procesando webhook:", error);
 
-        // Mercado Pago podrá volver a enviar la notificación
+        // Mercado Pago podrá volver a enviar la notificación.
         return res.status(500).json({
             mensaje: "Error al procesar la notificación"
         });

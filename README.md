@@ -181,3 +181,4 @@ PUT	        /api/admin/promos/:id	                    Modificar una promoción
 DELETE	    /api/admin/promos/:id	                    Eliminar una promoción
 
 Todas estas rutas requieren un token de un usuario cuyo rol sea admin.
+
