@@ -27,36 +27,180 @@ const obtenerOCrearCarrito = async (conexion, idCliente) => {
     return nuevo.rows[0].id;
 };
 
-// Obtiene el descuento de la promoción vigente más alta.
-// Si no hay promoción, devuelve 0.
-const obtenerDescuento = async (conexion, idProducto, unidades) => {
-    const resultado = await conexion.query(
-        `SELECT valordescuento
-         FROM promo
-         WHERE idproducto = $1
-           AND CURRENT_DATE BETWEEN fechainicio AND fechafin
-           AND (
-               cantidad_producto IS NULL
-               OR $2 >= cantidad_producto
-           )
-         ORDER BY valordescuento DESC
-         LIMIT 1`,
-        [idProducto, unidades]
+// Recalcula los descuentos de todos los artículos del carrito.
+// Contempla promociones individuales y promociones de dos productos distintos.
+const recalcularDescuentosCarrito = async (conexion, idCarrito) => {
+    const articulosResultado = await conexion.query(
+        `SELECT
+            cp.id,
+            cp.idproducto,
+            cp.unidades,
+            p.cantidad AS tamano
+         FROM carritoproducto cp
+         JOIN producto p ON p.id = cp.idproducto
+         WHERE cp.idcarrito = $1`,
+        [idCarrito]
     );
 
-    if (resultado.rows.length === 0) {
-        return 0;
+    const promocionesResultado = await conexion.query(
+        `SELECT
+            idproducto,
+            idproducto_complementario,
+            cantidad_producto,
+            valordescuento
+         FROM promo
+         WHERE CURRENT_DATE BETWEEN fechainicio AND fechafin`,
+    );
+
+    const articulos = articulosResultado.rows;
+    const promociones = promocionesResultado.rows;
+
+    const articulosPorProducto = new Map(
+        articulos.map(articulo => [
+            Number(articulo.idproducto),
+            articulo
+        ])
+    );
+
+    for (const articulo of articulos) {
+        const idProducto = Number(articulo.idproducto);
+        const unidades = Number(articulo.unidades);
+        const tamano = Number(articulo.tamano);
+
+        // Descuento de promociones individuales, como Primavera-Verano.
+        let descuentoBase = 0;
+
+        for (const promo of promociones) {
+            const esIndividual =
+                Number(promo.idproducto) === idProducto &&
+                promo.idproducto_complementario === null;
+
+            if (!esIndividual) continue;
+
+            const cantidadMinima = promo.cantidad_producto === null
+                ? null
+                : Number(promo.cantidad_producto);
+
+            
+            const descuento = Number(promo.valordescuento);
+
+            if (
+                !Number.isFinite(descuento) ||
+                descuento <= 0 ||
+                descuento > 100
+            ) {
+                throw new Error("DESCUENTO_PROMOCIONAL_INVALIDO");
+            }
+
+            // Calcula cuántas cajas forman grupos completos.
+            const unidadesPorGrupo = cantidadMinima !== null && cantidadMinima > 0
+                ? cantidadMinima
+                : 1;
+
+            const unidadesConDescuento =
+                Math.floor(unidades / unidadesPorGrupo) * unidadesPorGrupo;
+
+            // Si no se completa ningún grupo, no hay descuento.
+            if (unidadesConDescuento === 0) {
+                continue;
+            }
+
+            // Calcula el porcentaje efectivo de la línea.
+            const descuentoEfectivoPromo =
+                descuento * unidadesConDescuento / unidades;
+
+            descuentoBase = Math.max(
+                descuentoBase,
+                descuentoEfectivoPromo
+            );
+
+        }
+
+        // Busca promociones que necesitan un segundo producto.
+        let unidadesCombinadas = 0;
+        let descuentoCombinado = 0;
+
+        for (const promo of promociones) {
+            if (promo.idproducto_complementario === null) {
+                continue;
+            }
+
+            const idPrincipal = Number(promo.idproducto);
+            const idComplementario = Number(
+                promo.idproducto_complementario
+            );
+
+            let idOtroProducto = null;
+
+            if (idPrincipal === idProducto) {
+                idOtroProducto = idComplementario;
+            } else if (idComplementario === idProducto) {
+                idOtroProducto = idPrincipal;
+            } else {
+                continue;
+            }
+
+            const otroArticulo = articulosPorProducto.get(idOtroProducto);
+
+            if (!otroArticulo) continue;
+
+            // Los dos productos deben tener el mismo tamaño.
+            if (Number(otroArticulo.tamano) !== tamano) {
+                continue;
+            }
+
+            const descuento = Number(promo.valordescuento);
+
+            if (
+                !Number.isFinite(descuento) ||
+                descuento <= 0 ||
+                descuento > 100
+            ) {
+                throw new Error("DESCUENTO_PROMOCIONAL_INVALIDO");
+            }
+
+            const parejas = Math.min(
+                unidades,
+                Number(otroArticulo.unidades)
+            );
+
+            if (parejas > unidadesCombinadas) {
+                unidadesCombinadas = parejas;
+                descuentoCombinado = descuento;
+            } else if (
+                parejas === unidadesCombinadas &&
+                parejas > 0
+            ) {
+                descuentoCombinado = Math.max(
+                    descuentoCombinado,
+                    descuento
+                );
+            }
+        }
+
+        // Calcula el porcentaje efectivo de la línea.
+        // Las unidades combinadas reciben el mayor descuento.
+        // Las restantes conservan el descuento individual.
+        const descuentoEfectivo = unidades > 0
+            ? (
+                (
+                    (unidades - unidadesCombinadas) * descuentoBase
+                ) +
+                (
+                    unidadesCombinadas *
+                    Math.max(descuentoBase, descuentoCombinado)
+                )
+            ) / unidades
+            : 0;
+
+        await conexion.query(
+            `UPDATE carritoproducto
+             SET descuento = $1
+             WHERE id = $2`,
+            [descuentoEfectivo, articulo.id]
+        );
     }
-
-    const descuento = Number(resultado.rows[0].valordescuento);
-
-    if (!Number.isFinite(descuento) || descuento <= 0 || descuento > 100) {
-        throw new Error("DESCUENTO_PROMOCIONAL_INVALIDO");
-    }
-
-    return descuento;
 };
-
 
 // Consulta el carrito del usuario autenticado.
 const obtenerCarrito = async (req, res) => {
@@ -125,7 +269,7 @@ const obtenerCarrito = async (req, res) => {
 };
 
 // Agrega un producto al carrito.
-// Si ya existe, suma las unidades solicitadas a las que tenía.
+// Si ya existe, suma las unidades solicitadas.
 const agregarProducto = async (req, res) => {
     const idProducto = Number(req.body.idproducto);
     const unidades = Number(req.body.unidades);
@@ -148,7 +292,10 @@ const agregarProducto = async (req, res) => {
         await conexion.query("BEGIN");
 
         const idCliente = req.usuario.id;
-        const idCarrito = await obtenerOCrearCarrito(conexion, idCliente);
+        const idCarrito = await obtenerOCrearCarrito(
+            conexion,
+            idCliente
+        );
 
         const productoResultado = await conexion.query(
             `SELECT id, nombre, precio, stock, disponibilidad
@@ -196,46 +343,43 @@ const agregarProducto = async (req, res) => {
             });
         }
 
-        const descuento = await obtenerDescuento(
-            conexion,
-            idProducto,
-            unidadesFinales
-        );
-        let itemResultado;
-
         if (existente.rows.length > 0) {
-            itemResultado = await conexion.query(
+            await conexion.query(
                 `UPDATE carritoproducto
                  SET unidades = $1,
-                     preciounitario = $2,
-                     descuento = $3
-                 WHERE id = $4
-                 RETURNING id, idproducto, unidades,
-                           preciounitario, descuento, subtotal`,
+                     preciounitario = $2
+                 WHERE id = $3`,
                 [
                     unidadesFinales,
                     producto.precio,
-                    descuento,
                     existente.rows[0].id
                 ]
             );
         } else {
-            itemResultado = await conexion.query(
+            await conexion.query(
                 `INSERT INTO carritoproducto
                     (idcarrito, idproducto, unidades,
                      preciounitario, subtotal, descuento)
-                 VALUES ($1, $2, $3, $4, 0, $5)
-                 RETURNING id, idproducto, unidades,
-                           preciounitario, descuento, subtotal`,
+                 VALUES ($1, $2, $3, $4, 0, 0)`,
                 [
                     idCarrito,
                     idProducto,
                     unidadesFinales,
-                    producto.precio,
-                    descuento
+                    producto.precio
                 ]
             );
         }
+
+        // Recalcula tanto el producto agregado como su posible complemento.
+        await recalcularDescuentosCarrito(conexion, idCarrito);
+
+        const itemResultado = await conexion.query(
+            `SELECT id, idproducto, unidades,
+                    preciounitario, descuento, subtotal
+             FROM carritoproducto
+             WHERE idcarrito = $1 AND idproducto = $2`,
+            [idCarrito, idProducto]
+        );
 
         await conexion.query("COMMIT");
 
@@ -293,7 +437,7 @@ const actualizarProducto = async (req, res) => {
              WHERE cp.id = $1
                AND c.idcliente = $2
                AND c.valido = TRUE
-             FOR UPDATE OF cp`,
+             FOR UPDATE OF c, cp`,
             [idItem, idCliente]
         );
 
@@ -338,21 +482,26 @@ const actualizarProducto = async (req, res) => {
             });
         }
 
-        const descuento = await obtenerDescuento(
+        await conexion.query(
+            `UPDATE carritoproducto
+             SET unidades = $1,
+                 preciounitario = $2
+             WHERE id = $3`,
+            [unidades, producto.precio, idItem]
+        );
+
+        // Recalcula también el descuento del producto complementario.
+        await recalcularDescuentosCarrito(
             conexion,
-            item.idproducto,
-            unidades
+            item.idcarrito
         );
 
         const actualizado = await conexion.query(
-            `UPDATE carritoproducto
-             SET unidades = $1,
-                 preciounitario = $2,
-                 descuento = $3
-             WHERE id = $4
-             RETURNING id, idproducto, unidades,
-                       preciounitario, descuento, subtotal`,
-            [unidades, producto.precio, descuento, idItem]
+            `SELECT id, idproducto, unidades,
+                    preciounitario, descuento, subtotal
+             FROM carritoproducto
+             WHERE id = $1`,
+            [idItem]
         );
 
         await conexion.query("COMMIT");
@@ -390,33 +539,56 @@ const eliminarProducto = async (req, res) => {
         });
     }
 
+    const conexion = await pool.connect();
+
     try {
-        const resultado = await pool.query(
-            `DELETE FROM carritoproducto cp
-             USING carrito c
+        await conexion.query("BEGIN");
+
+        const resultado = await conexion.query(
+            `SELECT cp.id, c.id AS idcarrito
+             FROM carritoproducto cp
+             JOIN carrito c ON c.id = cp.idcarrito
              WHERE cp.id = $1
-               AND cp.idcarrito = c.id
                AND c.idcliente = $2
                AND c.valido = TRUE
-             RETURNING cp.id`,
+             FOR UPDATE OF c, cp`,
             [idItem, req.usuario.id]
         );
 
         if (resultado.rows.length === 0) {
+            await conexion.query("ROLLBACK");
             return res.status(404).json({
                 mensaje: "No se encontró ese artículo en tu carrito"
             });
         }
 
+        const idCarrito = resultado.rows[0].idcarrito;
+
+        await conexion.query(
+            `DELETE FROM carritoproducto
+             WHERE id = $1`,
+            [idItem]
+        );
+
+        // Si se elimina uno de los productos de un combo,
+        // se quita también el descuento que ya no corresponda.
+        await recalcularDescuentosCarrito(conexion, idCarrito);
+
+        await conexion.query("COMMIT");
+
         return res.status(200).json({
             mensaje: "Producto eliminado del carrito"
         });
     } catch (error) {
+        await conexion.query("ROLLBACK").catch(() => {});
+
         console.error("Error al eliminar del carrito:", error);
 
         return res.status(500).json({
             mensaje: "Error interno al eliminar el producto"
         });
+    } finally {
+        conexion.release();
     }
 };
 

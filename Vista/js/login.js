@@ -37,7 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("token", datos.token);
             localStorage.setItem("usuario", JSON.stringify(datos.usuario));
 
-            window.location.href = "perfil.html";
+            window.location.href = datos.usuario.rol === "admin"
+                ? "admin.html"
+                : "perfil.html";
 
         } catch (error) {
             mensaje.textContent = error.message;

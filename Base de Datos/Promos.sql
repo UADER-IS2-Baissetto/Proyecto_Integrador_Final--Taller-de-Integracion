@@ -1,3 +1,4 @@
+-- Insertando promo
 insert into promo (
     idproducto,
     fechainicio,
@@ -39,3 +40,57 @@ values
     'Promos/primavera-verano.png',
     2
 );
+
+-- Añadiendo otra columna con un id mas
+-- Permitiendo sumar otro tipo de promos
+ALTER TABLE promo
+ADD COLUMN idproducto_complementario INTEGER
+REFERENCES producto(id);
+
+-- Creando nuevas promos
+INSERT INTO promo (
+    idproducto,
+    idproducto_complementario,
+    fechainicio,
+    fechafin,
+    valordescuento,
+    nombre,
+    descripcion,
+    imagen,
+    cantidad_producto
+)
+VALUES
+(
+    4,
+    7,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '90 days',
+    20,
+    'Esencia Moderna',
+    'Combiná una caja de Esencia Argentina con una de Fusión Moderna, ambas del mismo tamaño, y disfrutá de un 20% de descuento.',
+    'Promos/esencia-moderna.png',
+    1
+),
+(
+    5,
+    8,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '90 days',
+    20,
+    'Esencia Moderna',
+    'Combiná una caja de Esencia Argentina con una de Fusión Moderna, ambas del mismo tamaño, y disfrutá de un 20% de descuento.',
+    'Promos/esencia-moderna.png',
+    1
+),
+(
+    6,
+    9,
+    CURRENT_DATE,
+    CURRENT_DATE + INTERVAL '90 days',
+    20,
+    'Esencia Moderna',
+    'Combiná una caja de Esencia Argentina con una de Fusión Moderna, ambas del mismo tamaño, y disfrutá de un 20% de descuento.',
+    'Promos/esencia-moderna.png',
+    1
+);
+

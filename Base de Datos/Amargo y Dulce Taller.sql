@@ -531,6 +531,21 @@ begin
 end;
 $$ language plpgsql;
 
+--------------------- Registro de productos vendidos ------------
+CREATE OR REPLACE VIEW vista_productos_vendidos AS
+SELECT
+    p.id,
+    p.nombre,
+    SUM(cp.unidades) AS total_vendido
+FROM producto p
+JOIN compraproducto cp
+    ON p.id = cp.idproducto
+JOIN compra c
+    ON c.id = cp.idcompra
+WHERE c.estado = 'pagada'
+GROUP BY p.id, p.nombre
+ORDER BY SUM(cp.unidades) DESC;
+
 ----------------------- Total vendido en una fecha --------------------
 create or replace function total_ventas_fecha(p_fecha date)
 returns decimal as $$
@@ -564,7 +579,9 @@ begin
 end;
 $$ language plpgsql;
 
-------------------- Confirmar compra desde carrito -----------------
+
+-------------------- Confirmar compra desde carrito -----------------
+
 CREATE OR REPLACE FUNCTION confirmar_compra(p_idcliente int)
 RETURNS int AS $$
 DECLARE
@@ -596,8 +613,7 @@ BEGIN
         RAISE EXCEPTION 'El carrito está vacío';
     END IF;
 
-    -- Bloquear los productos involucrados para evitar
-    -- que se modifique su stock durante la validación.
+    -- Bloquear los productos involucrados.
     PERFORM p.id
     FROM producto p
     JOIN carritoproducto cp ON cp.idproducto = p.id
@@ -605,7 +621,7 @@ BEGIN
     ORDER BY p.id
     FOR UPDATE OF p;
 
-    -- Validar que haya stock suficiente.
+    -- Validar stock.
     FOR item IN
         SELECT
             cp.idproducto,
@@ -623,36 +639,115 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- Calcular el total respetando la cantidad mínima
-    -- requerida por cada promoción.
+    /*
+        Calcular el total.
+
+        Promociones individuales:
+        se aplican por grupos completos de cantidad_producto.
+
+        Promociones combinadas:
+        se aplican únicamente a las unidades que forman
+        parejas de productos complementarios del mismo tamaño.
+    */
+
+    WITH detalle AS (
+        SELECT
+            cp.idproducto,
+            cp.unidades,
+            p.precio,
+
+            COALESCE(base.descuento, 0) AS descuento_base,
+
+            COALESCE(combo.unidades_combinadas, 0)
+                AS unidades_combinadas,
+
+            COALESCE(combo.descuento, 0)
+                AS descuento_combinado
+
+        FROM carritoproducto cp
+        JOIN producto p ON p.id = cp.idproducto
+
+        -- Promoción individual.
+        LEFT JOIN LATERAL (
+            SELECT
+                MAX(
+                    pr.valordescuento *
+                    (
+                        FLOOR(
+                            cp.unidades::numeric /
+                            GREATEST(COALESCE(pr.cantidad_producto, 1), 1)
+                        ) *
+                        GREATEST(COALESCE(pr.cantidad_producto, 1), 1)
+                    ) /
+                    NULLIF(cp.unidades, 0)
+                ) AS descuento
+            FROM promo pr
+            WHERE pr.idproducto = cp.idproducto
+              AND pr.idproducto_complementario IS NULL
+              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+        ) base ON TRUE
+
+        -- Promoción de dos productos distintos.
+        LEFT JOIN LATERAL (
+            SELECT
+                MAX(pr.valordescuento) AS descuento,
+                MAX(LEAST(cp.unidades, otro.unidades))
+                    AS unidades_combinadas
+            FROM promo pr
+            JOIN carritoproducto otro
+              ON otro.idcarrito = v_idcarrito
+             AND otro.idproducto = CASE
+                    WHEN pr.idproducto = cp.idproducto
+                    THEN pr.idproducto_complementario
+                    ELSE pr.idproducto
+                 END
+            JOIN producto otro_producto
+              ON otro_producto.id = otro.idproducto
+            WHERE pr.idproducto_complementario IS NOT NULL
+              AND (
+                  pr.idproducto = cp.idproducto
+                  OR pr.idproducto_complementario = cp.idproducto
+              )
+              AND otro_producto.cantidad = p.cantidad
+              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+        ) combo ON TRUE
+
+        WHERE cp.idcarrito = v_idcarrito
+    ),
+    descuentos AS (
+        SELECT
+            idproducto,
+            unidades,
+            precio,
+
+            CASE
+                WHEN unidades > 0 THEN
+                    (
+                        (unidades - unidades_combinadas) * descuento_base
+                        +
+                        unidades_combinadas *
+                        GREATEST(descuento_base, descuento_combinado)
+                    ) / unidades
+                ELSE 0
+            END AS descuento_final
+
+        FROM detalle
+    )
     SELECT COALESCE(
         SUM(
-            cp.unidades * p.precio *
-            (
-                1 - (
-                    SELECT COALESCE(MAX(pr.valordescuento), 0)
-                    FROM promo pr
-                    WHERE pr.idproducto = p.id
-                      AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
-                      AND (
-                          pr.cantidad_producto IS NULL
-                          OR cp.unidades >= pr.cantidad_producto
-                      )
-                ) / 100
-            )
+            unidades * precio *
+            (1 - descuento_final / 100)
         ),
         0
     )
     INTO v_total
-    FROM carritoproducto cp
-    JOIN producto p ON p.id = cp.idproducto
-    WHERE cp.idcarrito = v_idcarrito;
+    FROM descuentos;
 
     IF v_total <= 0 THEN
         RAISE EXCEPTION 'El total de la compra debe ser mayor a cero';
     END IF;
 
-    -- Crear la compra como pendiente.
+    -- Crear la compra pendiente.
     INSERT INTO compra (
         idcliente,
         estado,
@@ -669,8 +764,90 @@ BEGIN
     )
     RETURNING id INTO v_idcompra;
 
-    -- Registrar los productos y sus descuentos.
-    -- IMPORTANTE: ya no se descuenta el stock en esta inserción.
+    -- Registrar los productos con sus descuentos correspondientes.
+    WITH detalle AS (
+        SELECT
+            cp.idproducto,
+            cp.unidades,
+            p.precio,
+
+            COALESCE(base.descuento, 0) AS descuento_base,
+
+            COALESCE(combo.unidades_combinadas, 0)
+                AS unidades_combinadas,
+
+            COALESCE(combo.descuento, 0)
+                AS descuento_combinado
+
+        FROM carritoproducto cp
+        JOIN producto p ON p.id = cp.idproducto
+
+        -- Promoción individual.
+        LEFT JOIN LATERAL (
+            SELECT
+                MAX(
+                    pr.valordescuento *
+                    (
+                        FLOOR(
+                            cp.unidades::numeric /
+                            GREATEST(COALESCE(pr.cantidad_producto, 1), 1)
+                        ) *
+                        GREATEST(COALESCE(pr.cantidad_producto, 1), 1)
+                    ) /
+                    NULLIF(cp.unidades, 0)
+                ) AS descuento
+            FROM promo pr
+            WHERE pr.idproducto = cp.idproducto
+              AND pr.idproducto_complementario IS NULL
+              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+        ) base ON TRUE
+
+        -- Promoción de dos productos distintos.
+        LEFT JOIN LATERAL (
+            SELECT
+                MAX(pr.valordescuento) AS descuento,
+                MAX(LEAST(cp.unidades, otro.unidades))
+                    AS unidades_combinadas
+            FROM promo pr
+            JOIN carritoproducto otro
+              ON otro.idcarrito = v_idcarrito
+             AND otro.idproducto = CASE
+                    WHEN pr.idproducto = cp.idproducto
+                    THEN pr.idproducto_complementario
+                    ELSE pr.idproducto
+                 END
+            JOIN producto otro_producto
+              ON otro_producto.id = otro.idproducto
+            WHERE pr.idproducto_complementario IS NOT NULL
+              AND (
+                  pr.idproducto = cp.idproducto
+                  OR pr.idproducto_complementario = cp.idproducto
+              )
+              AND otro_producto.cantidad = p.cantidad
+              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
+        ) combo ON TRUE
+
+        WHERE cp.idcarrito = v_idcarrito
+    ),
+    descuentos AS (
+        SELECT
+            idproducto,
+            unidades,
+            precio,
+
+            CASE
+                WHEN unidades > 0 THEN
+                    (
+                        (unidades - unidades_combinadas) * descuento_base
+                        +
+                        unidades_combinadas *
+                        GREATEST(descuento_base, descuento_combinado)
+                    ) / unidades
+                ELSE 0
+            END AS descuento_final
+
+        FROM detalle
+    )
     INSERT INTO compraproducto (
         idcompra,
         idproducto,
@@ -681,23 +858,12 @@ BEGIN
     )
     SELECT
         v_idcompra,
-        p.id,
-        cp.unidades,
-        p.precio,
+        idproducto,
+        unidades,
+        precio,
         0,
-        (
-            SELECT COALESCE(MAX(pr.valordescuento), 0)
-            FROM promo pr
-            WHERE pr.idproducto = p.id
-              AND CURRENT_DATE BETWEEN pr.fechainicio AND pr.fechafin
-              AND (
-                  pr.cantidad_producto IS NULL
-                  OR cp.unidades >= pr.cantidad_producto
-              )
-        )
-    FROM carritoproducto cp
-    JOIN producto p ON p.id = cp.idproducto
-    WHERE cp.idcarrito = v_idcarrito;
+        descuento_final
+    FROM descuentos;
 
     -- El carrito y el stock se mantienen sin cambios
     -- hasta que Mercado Pago confirme el pago.

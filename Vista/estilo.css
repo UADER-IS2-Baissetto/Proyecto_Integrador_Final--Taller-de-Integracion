@@ -162,24 +162,41 @@ nav div .lobster {
 #carousel1 {
     max-width: 1100px;
     margin: 0 auto;
+    position: relative;
 }
 
-#carousel1 .carousel-inner {
-    max-width: 1000px;
-    margin: 0 auto;
+/* Ventana visible del carrusel */
+.promo-carrusel-ventana {
+    width: 100%;
+    overflow: hidden;
+    padding: 0 3px;
 }
 
-#carousel1 .carousel-item {
-    padding: 0;
+/* Pista que contiene las promociones */
+.promo-carrusel-pista {
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+    transition: transform 0.8s ease-in-out;
+    will-change: transform;
 }
 
-.carousel .promo {
+/* Cada promoción */
+.promo-carrusel-item {
+    flex: 0 0 78%;
+    min-width: 0;
+}
+
+/* Contenedor marrón de la promoción */
+.promo-carrusel-item .promo {
     background-color: #B78750;
     color: white;
     border-radius: 18px;
     overflow: hidden;
+    height: 100%;
 }
 
+/* Contenido de la promoción */
 .promo-contenido {
     min-height: 220px;
     max-height: 240px;
@@ -222,7 +239,7 @@ nav div .lobster {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0px 25px;
+    padding: 0 25px;
 }
 
 .promo-imagen {
@@ -245,12 +262,28 @@ nav div .lobster {
     border-radius: 18px;
 }
 
+/* Flechas centradas verticalmente */
 #carousel1 .carousel-control-prev,
 #carousel1 .carousel-control-next {
     width: 5%;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    margin: 0 -4%; /* Ajusta la separacion de las flechas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
 }
 
+
+
+/* Vista en celulares */
 @media (max-width: 767px) {
+    .promo-carrusel-item {
+        flex-basis: 90%;
+    }
+
     .promo-contenido {
         min-height: 0;
         max-height: none;
@@ -600,4 +633,335 @@ footer .liberty a {
     font-size: 25px;
     color: black;
     text-decoration: none;
+}
+
+
+/* ==========================================
+   PANEL DE ADMINISTRACIÓN
+========================================== */
+
+.admin-contenedor {
+    max-width: 1600px;
+    color: #692D20;
+}
+
+.admin-titulo {
+    color: #692D20;
+    font-family: 'Lobster', sans-serif;
+    font-size: 38px;
+}
+
+.admin-subtitulo {
+    color: #79533D;
+    font-size: 17px;
+}
+
+.admin-seccion-titulo {
+    color: #692D20;
+    font-family: 'Lobster', sans-serif;
+    font-size: 30px;
+    margin-bottom: 5px;
+}
+
+.admin-menu {
+    background-color: #F4E5CC;
+    border: 1px solid #B78750;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    position: sticky;
+    top: 15px;
+}
+
+.admin-nav {
+    border: none;
+    background: transparent;
+    color: #692D20;
+    border-radius: 9px;
+    text-align: left;
+    padding: 13px 14px;
+    font-family: 'Lobster', sans-serif;
+    font-size: 18px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-nav span {
+    display: inline-block;
+    width: 28px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+}
+
+.admin-nav:hover,
+.admin-nav.activo {
+    background-color: #692D20;
+    color: white;
+}
+
+.admin-indicador {
+    height: 100%;
+    min-height: 125px;
+    padding: 20px;
+    border-radius: 13px;
+    background-color: #F4E5CC;
+    border: 1px solid #B78750;
+    box-shadow: 0 3px 8px rgba(70, 35, 15, 0.10);
+}
+
+.admin-indicador p {
+    margin-bottom: 12px;
+    font-size: 15px;
+    color: #79533D;
+}
+
+.admin-indicador h3 {
+    font-size: 25px;
+    font-weight: bold;
+    color: #692D20;
+    overflow-wrap: anywhere;
+}
+
+.admin-panel {
+    background-color: #FFF9F0;
+    border: 1px solid #D7B98E;
+    border-radius: 13px;
+    padding: 22px;
+    box-shadow: 0 3px 8px rgba(70, 35, 15, 0.08);
+}
+
+.admin-panel h3 {
+    color: #692D20;
+    font-family: 'Lobster', sans-serif;
+    font-size: 23px;
+    margin-bottom: 18px;
+}
+
+.admin-encabezado-seccion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.btn-admin-principal,
+.btn-admin-secundario {
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-weight: bold;
+    transition: 0.2s ease;
+}
+
+.btn-admin-principal {
+    background-color: #692D20;
+    color: white;
+    border: 1px solid #692D20;
+}
+
+.btn-admin-principal:hover {
+    background-color: #B78750;
+    border-color: #B78750;
+    color: white;
+}
+
+.btn-admin-secundario {
+    background-color: #F4E5CC;
+    color: #692D20;
+    border: 1px solid #B78750;
+}
+
+.btn-admin-secundario:hover {
+    background-color: #B78750;
+    color: white;
+}
+
+.admin-tabla {
+    color: #692D20;
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+.admin-tabla thead th {
+    background-color: #692D20;
+    color: white;
+    white-space: nowrap;
+    font-weight: normal;
+}
+
+.admin-tabla tbody td {
+    background-color: #FFF9F0;
+    border-color: #E6D2B4;
+}
+
+.admin-tabla small {
+    color: #80644C;
+    max-width: 280px;
+    overflow-wrap: anywhere;
+}
+
+.admin-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 150px;
+}
+
+.btn-tabla {
+    background-color: #B78750;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 9px;
+    font-size: 13px;
+}
+
+.btn-tabla:hover {
+    background-color: #692D20;
+    color: white;
+}
+
+.btn-tabla-peligro {
+    background-color: #A83232;
+}
+
+.btn-tabla-peligro:hover {
+    background-color: #781B1B;
+}
+
+.admin-estado {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.estado-activo {
+    color: #245B25;
+    background-color: #DCEEDB;
+}
+
+.estado-inactivo {
+    color: #7A2525;
+    background-color: #F5DADA;
+}
+
+.estado-pendiente {
+    color: #805300;
+    background-color: #F8E8BD;
+}
+
+.admin-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-lista li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #E6D2B4;
+}
+
+.admin-lista li:last-child {
+    border-bottom: none;
+}
+
+.admin-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background-color: rgba(35, 20, 12, 0.65);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.admin-modal-contenido {
+    width: 100%;
+    max-width: 700px;
+    max-height: 92vh;
+    overflow-y: auto;
+    background-color: #FFF9F0;
+    border: 2px solid #B78750;
+    border-radius: 15px;
+    padding: 24px;
+    color: #692D20;
+}
+
+.admin-modal-encabezado {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.admin-modal-encabezado h2 {
+    font-family: 'Lobster', sans-serif;
+    font-size: 28px;
+    margin: 0;
+}
+
+.admin-modal-cerrar {
+    border: none;
+    background: transparent;
+    color: #692D20;
+    font-size: 32px;
+    line-height: 1;
+}
+
+.admin-modal .form-control,
+.admin-modal .form-select,
+.admin-panel .form-control,
+.admin-panel .form-select {
+    border: 1px solid #B78750;
+    border-radius: 7px;
+}
+
+.admin-modal .form-control:focus,
+.admin-modal .form-select:focus,
+.admin-panel .form-control:focus,
+.admin-panel .form-select:focus {
+    border-color: #692D20;
+    box-shadow: 0 0 0 0.15rem rgba(105, 45, 32, 0.15);
+}
+
+@media (max-width: 991px) {
+    .admin-menu {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 575px) {
+    .admin-titulo {
+        font-size: 30px;
+    }
+
+    .admin-encabezado-seccion {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-encabezado-seccion .btn-admin-principal {
+        width: 100%;
+    }
+
+    .admin-panel {
+        padding: 14px;
+    }
+
+    .admin-modal-contenido {
+        padding: 17px;
+    }
 }

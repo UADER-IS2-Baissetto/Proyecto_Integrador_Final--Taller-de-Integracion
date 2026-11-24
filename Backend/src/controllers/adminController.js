@@ -510,6 +510,7 @@ const obtenerEstadisticas = async (req, res) => {
     }
 };
 
+
 // Consultar todas las promociones, incluso las vencidas
 const obtenerPromosAdmin = async (req, res) => {
     try {
@@ -517,6 +518,7 @@ const obtenerPromosAdmin = async (req, res) => {
             `SELECT
                 pr.id,
                 pr.idproducto,
+                pr.idproducto_complementario,
                 pr.nombre,
                 pr.descripcion,
                 pr.fechainicio,
@@ -524,9 +526,11 @@ const obtenerPromosAdmin = async (req, res) => {
                 pr.imagen,
                 pr.cantidad_producto,
                 pr.valordescuento,
-                p.nombre AS producto
+                p.nombre AS producto,
+                pc.nombre AS producto_complementario
              FROM promo pr
              JOIN producto p ON p.id = pr.idproducto
+             LEFT JOIN producto pc ON pc.id = pr.idproducto_complementario
              ORDER BY pr.id DESC`
         );
 
@@ -547,6 +551,7 @@ const crearPromo = async (req, res) => {
     try {
         const {
             idproducto,
+            idproducto_complementario,
             nombre,
             descripcion,
             fechainicio,
@@ -557,18 +562,31 @@ const crearPromo = async (req, res) => {
         } = req.body;
 
         const idProductoNumero = Number(idproducto);
-        const cantidadNumero = cantidad_producto == null
+
+        const idComplementarioNumero = idproducto_complementario == null ||
+            idproducto_complementario === ""
+            ? null
+            : Number(idproducto_complementario);
+
+        const cantidadNumero = cantidad_producto == null ||
+            cantidad_producto === ""
             ? null
             : Number(cantidad_producto);
+
         const descuentoNumero = Number(valordescuento);
 
         if (
             !Number.isInteger(idProductoNumero) ||
             idProductoNumero <= 0 ||
+            (idComplementarioNumero !== null &&
+                (!Number.isInteger(idComplementarioNumero) ||
+                 idComplementarioNumero <= 0 ||
+                 idComplementarioNumero === idProductoNumero)) ||
             !nombre ||
             !descripcion ||
             !fechainicio ||
             !fechafin ||
+            fechafin < fechainicio ||
             (cantidadNumero !== null &&
                 (!Number.isInteger(cantidadNumero) || cantidadNumero <= 0)) ||
             !Number.isFinite(descuentoNumero) ||
@@ -581,24 +599,42 @@ const crearPromo = async (req, res) => {
         }
 
         const producto = await pool.query(
-            "SELECT id FROM producto WHERE id = $1",
+            `SELECT id
+             FROM producto
+             WHERE id = $1`,
             [idProductoNumero]
         );
 
         if (producto.rows.length === 0) {
             return res.status(404).json({
-                mensaje: "El producto indicado no existe"
+                mensaje: "El producto principal no existe"
             });
+        }
+
+        if (idComplementarioNumero !== null) {
+            const complementario = await pool.query(
+                `SELECT id
+                 FROM producto
+                 WHERE id = $1`,
+                [idComplementarioNumero]
+            );
+
+            if (complementario.rows.length === 0) {
+                return res.status(404).json({
+                    mensaje: "El producto complementario no existe"
+                });
+            }
         }
 
         const resultado = await pool.query(
             `INSERT INTO promo
-                (idproducto, nombre, descripcion, fechainicio, fechafin,
-                 imagen, cantidad_producto, valordescuento)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                (idproducto, idproducto_complementario, nombre, descripcion,
+                 fechainicio, fechafin, imagen, cantidad_producto, valordescuento)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING *`,
             [
                 idProductoNumero,
+                idComplementarioNumero,
                 nombre.trim(),
                 descripcion.trim(),
                 fechainicio,
@@ -634,6 +670,7 @@ const actualizarPromo = async (req, res) => {
 
         const {
             idproducto,
+            idproducto_complementario,
             nombre,
             descripcion,
             fechainicio,
@@ -644,18 +681,31 @@ const actualizarPromo = async (req, res) => {
         } = req.body;
 
         const idProductoNumero = Number(idproducto);
-        const cantidadNumero = cantidad_producto == null
+
+        const idComplementarioNumero = idproducto_complementario == null ||
+            idproducto_complementario === ""
+            ? null
+            : Number(idproducto_complementario);
+
+        const cantidadNumero = cantidad_producto == null ||
+            cantidad_producto === ""
             ? null
             : Number(cantidad_producto);
+
         const descuentoNumero = Number(valordescuento);
 
         if (
             !Number.isInteger(idProductoNumero) ||
             idProductoNumero <= 0 ||
+            (idComplementarioNumero !== null &&
+                (!Number.isInteger(idComplementarioNumero) ||
+                 idComplementarioNumero <= 0 ||
+                 idComplementarioNumero === idProductoNumero)) ||
             !nombre ||
             !descripcion ||
             !fechainicio ||
             !fechafin ||
+            fechafin < fechainicio ||
             (cantidadNumero !== null &&
                 (!Number.isInteger(cantidadNumero) || cantidadNumero <= 0)) ||
             !Number.isFinite(descuentoNumero) ||
@@ -667,20 +717,46 @@ const actualizarPromo = async (req, res) => {
             });
         }
 
+        const producto = await pool.query(
+            "SELECT id FROM producto WHERE id = $1",
+            [idProductoNumero]
+        );
+
+        if (producto.rows.length === 0) {
+            return res.status(404).json({
+                mensaje: "El producto principal no existe"
+            });
+        }
+
+        if (idComplementarioNumero !== null) {
+            const complementario = await pool.query(
+                "SELECT id FROM producto WHERE id = $1",
+                [idComplementarioNumero]
+            );
+
+            if (complementario.rows.length === 0) {
+                return res.status(404).json({
+                    mensaje: "El producto complementario no existe"
+                });
+            }
+        }
+
         const resultado = await pool.query(
             `UPDATE promo
              SET idproducto = $1,
-                 nombre = $2,
-                 descripcion = $3,
-                 fechainicio = $4,
-                 fechafin = $5,
-                 imagen = $6,
-                 cantidad_producto = $7,
-                 valordescuento = $8
-             WHERE id = $9
+                 idproducto_complementario = $2,
+                 nombre = $3,
+                 descripcion = $4,
+                 fechainicio = $5,
+                 fechafin = $6,
+                 imagen = $7,
+                 cantidad_producto = $8,
+                 valordescuento = $9
+             WHERE id = $10
              RETURNING *`,
             [
                 idProductoNumero,
+                idComplementarioNumero,
                 nombre.trim(),
                 descripcion.trim(),
                 fechainicio,

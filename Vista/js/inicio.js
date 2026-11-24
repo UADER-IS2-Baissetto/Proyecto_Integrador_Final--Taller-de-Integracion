@@ -91,13 +91,19 @@ function cargarOpcionesSabores() {
 
     if (!contenedor) return;
 
-    const sabores = [
-        ...new Set(
-            productosCargados
-                .map(producto => obtenerSabor(producto))
-                .filter(Boolean)
-        )
-    ];
+    const sabores = new Map();
+
+    productosCargados.forEach(producto => {
+        const sabor = String(producto.sabor || "").trim();
+
+        if (!sabor) return;
+
+        const clave = normalizarTexto(sabor);
+
+        if (!sabores.has(clave)) {
+            sabores.set(clave, clave);
+        }
+    });
 
     contenedor.innerHTML = `
         <li>
@@ -108,12 +114,12 @@ function cargarOpcionesSabores() {
             </button>
         </li>
 
-        ${sabores.map(sabor => `
+        ${Array.from(sabores.entries()).map(([clave, nombre]) => `
             <li>
                 <button class="dropdown-item"
                         data-filtro="sabor"
-                        data-valor="${escaparHTML(sabor)}">
-                    ${escaparHTML(sabor)}
+                        data-valor="${escaparHTML(clave)}">
+                    ${escaparHTML(nombre)}
                 </button>
             </li>
         `).join("")}
@@ -153,14 +159,10 @@ function aplicarFiltros() {
 
     // Sabor.
     if (filtrosActivos.sabor) {
-        const saborSeleccionado = normalizarTexto(filtrosActivos.sabor);
-
         productosFiltrados = productosFiltrados.filter(producto => {
-            const saborProducto = normalizarTexto(
-                producto.sabor || obtenerSabor(producto)
-            );
+            const saborProducto = normalizarTexto(producto.sabor);
 
-            return saborProducto === saborSeleccionado;
+            return saborProducto === filtrosActivos.sabor;
         });
     }
 
@@ -294,7 +296,7 @@ async function cargarPromociones() {
 
         if (promocionesUnicas.length === 0) {
             contenedor.innerHTML = `
-                <div class="carousel-item active">
+                <div class="promo-carrusel-item">
                     <div class="promo-mensaje">
                         <h2 class="lobster fw-bold mb-0">
                             No hay promociones vigentes
@@ -305,11 +307,10 @@ async function cargarPromociones() {
             return;
         }
 
-        promocionesUnicas.forEach((promo, indice) => {
+        promocionesUnicas.forEach(promo => {
             const elemento = document.createElement("div");
 
-            elemento.className =
-                `carousel-item${indice === 0 ? " active" : ""}`;
+            elemento.className = "promo-carrusel-item";
 
             const nombre = escaparHTML(promo.nombre || "Promoción");
             const descripcion = escaparHTML(promo.descripcion || "");
@@ -347,20 +348,13 @@ async function cargarPromociones() {
             contenedor.appendChild(elemento);
         });
 
-        const carrusel = document.getElementById("carousel1");
-
-        if (carrusel && window.bootstrap) {
-            const instancia =
-                bootstrap.Carousel.getOrCreateInstance(carrusel);
-
-            instancia.to(0);
-        }
+        iniciarCarruselPromociones();
 
     } catch (error) {
         console.error("Error al cargar promociones:", error);
 
         contenedor.innerHTML = `
-            <div class="carousel-item active">
+            <div class="promo-carrusel-item">
                 <div class="promo-mensaje">
                     <h2 class="lobster fw-bold mb-0">
                         No se pudieron cargar las promociones
@@ -371,21 +365,120 @@ async function cargarPromociones() {
     }
 }
 
+
+// Configura el desplazamiento automático y manual.
+function iniciarCarruselPromociones() {
+    const carrusel = document.getElementById("carousel1");
+    const pista = document.getElementById("contenedor-promociones");
+    const botonAnterior = document.getElementById("promo-anterior");
+    const botonSiguiente = document.getElementById("promo-siguiente");
+
+    if (!carrusel || !pista || !botonAnterior || !botonSiguiente) {
+        return;
+    }
+
+    const promociones = Array.from(pista.children);
+
+    if (promociones.length <= 1) {
+        botonAnterior.style.display = "none";
+        botonSiguiente.style.display = "none";
+        return;
+    }
+
+    // Clones para permitir un desplazamiento continuo.
+    const primeraCopia = promociones[0].cloneNode(true);
+    const ultimaCopia = promociones[promociones.length - 1].cloneNode(true);
+
+    pista.appendChild(primeraCopia);
+    pista.insertBefore(ultimaCopia, pista.firstChild);
+
+    let indice = 1;
+    let intervalo;
+
+    function moverCarrusel(animar = true) {
+        const elementos = Array.from(pista.children);
+        const elementoActual = elementos[indice];
+
+        if (!elementoActual) return;
+
+        pista.style.transition = animar
+            ? "transform 0.8s ease-in-out"
+            : "none";
+
+        pista.style.transform = `translateX(-${elementoActual.offsetLeft}px)`;
+    }
+
+    function siguiente() {
+        indice++;
+        moverCarrusel();
+    }
+
+    function anterior() {
+        indice--;
+        moverCarrusel();
+    }
+
+    pista.addEventListener("transitionend", () => {
+        const cantidad = promociones.length;
+
+        if (indice === cantidad + 1) {
+            indice = 1;
+            moverCarrusel(false);
+        }
+
+        if (indice === 0) {
+            indice = cantidad;
+            moverCarrusel(false);
+        }
+    });
+
+    botonSiguiente.addEventListener("click", () => {
+        siguiente();
+        reiniciarIntervalo();
+    });
+
+    botonAnterior.addEventListener("click", () => {
+        anterior();
+        reiniciarIntervalo();
+    });
+
+    function reiniciarIntervalo() {
+        clearInterval(intervalo);
+        intervalo = setInterval(siguiente, 4000);
+    }
+
+    // Posición inicial y comienzo del movimiento automático.
+    requestAnimationFrame(() => {
+        moverCarrusel(false);
+        reiniciarIntervalo();
+    });
+
+    // Recalcula la posición si cambia el tamaño de la pantalla.
+    window.addEventListener("resize", () => {
+        moverCarrusel(false);
+    });
+}
+
+
 // Inicialización.
 document.addEventListener("DOMContentLoaded", () => {
 
-    document.querySelectorAll("[data-filtro]").forEach(boton => {
-        boton.addEventListener("click", () => {
-            const filtro = boton.dataset.filtro;
-            const valor = boton.dataset.valor;
+    // Detecta los filtros incluso cuando sus botones se crean dinámicamente.
+    document.addEventListener("click", event => {
+        const boton = event.target.closest("[data-filtro]");
 
-            if (Object.hasOwn(filtrosActivos, filtro)) {
-                filtrosActivos[filtro] = valor;
-                aplicarFiltros();
-            }
-        });
+        if (!boton) return;
+
+        const filtro = boton.dataset.filtro;
+        const valor = boton.dataset.valor;
+
+        if (Object.hasOwn(filtrosActivos, filtro)) {
+            filtrosActivos[filtro] = valor;
+            aplicarFiltros();
+        }
     });
 
+    // Limpiar todos los filtros.
     document.getElementById("limpiar-filtros")
         ?.addEventListener("click", () => {
 
@@ -396,6 +489,8 @@ document.addEventListener("DOMContentLoaded", () => {
             aplicarFiltros();
         });
 
+    // Cargar productos y promociones al abrir la página.
     cargarProductos();
     cargarPromociones();
+
 });
